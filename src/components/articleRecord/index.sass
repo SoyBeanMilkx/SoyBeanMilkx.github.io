@@ -1,0 +1,101 @@
+//过度
+.in
+  opacity: 0
+  transform: translateY(-25px)
+  animation: fadeIn 1s forwards
+
+
+.articleRecord
+  padding-top: 30px
+  width: 100%
+  height: 100%
+  border-radius: 10px
+  box-sizing: border-box
+  display: flex
+  flex-direction: column
+  align-items: center
+  .articleRecordImg
+    width: 100%
+    height: 19%
+    background-color: white
+    border-radius: 10px
+    box-shadow: 0 1px 22px -8px rgba(26, 26, 26, .6)
+    @media only screen and (max-width: 1530px)
+    height: auto
+    img
+      width: 98%
+
+    img
+      margin: 10px
+
+  .articleRecordBox
+    height: 80%
+    width: 100%
+    margin-top: 10px
+    overflow-y: auto
+    overflow-x: hidden
+
+    h3
+      margin-left: 15px
+
+    .articleRecordCard
+      box-shadow: 0 1px 22px -8px rgba(26, 26, 26, .6)
+      width: 98%
+      height: 21.7%
+      background-color: rgba(255,255,255,0.33)
+      margin: 1.3%
+      border-radius: 10px
+      padding: 1%
+      @media only screen and (max-width: 1530px)
+        padding: 10px
+        height: auto
+        height: 120px
+        
+      .tags
+        position: absolute
+        bottom: 10px
+        left: 20px
+
+        .tag
+          margin-right: 10px
+          height: max-content
+          width: max-content
+          background-color: #795da3
+          border-radius: 5px
+          padding: 2px
+
+
+      &::before
+        content: ''
+        width: 3px
+        height: 90%
+        background-color: #484f58
+        position: absolute
+        left: -5px
+        border-radius: 10px
+        transform: translateX(-5px)
+
+
+      h3
+        display: inline
+
+      .post-date
+        float: right
+        background-color: #1e73be26
+        font-size: 12px
+        width: max-content
+        padding: 4px 10px 4px 10px
+        border-radius: 6px
+        color: #505050
+        white-space: nowrap
+        transition: all 0.8s ease!important
+        line-height: 20px
+
+
+@keyframes fadeIn
+  from
+    opacity: 0
+    transform: translateY(-25px)
+  to
+    opacity: 1
+    transform: translateY(0)

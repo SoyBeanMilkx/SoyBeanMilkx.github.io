@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog list</title>
+    <!-- 在这里引入 Showdown.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js"></script>
+    <link rel="icon" href="./static/img/icon.jpg">
+</head>
+<body>
+
+<script src="./static/js/backview.js"></script>
+
+<h1>Markdown 解析器示例</h1>
+<div id="markdown-content"></div>
+
+<script>
+    // 创建一个 Showdown 实例
+    var converter = new showdown.Converter();
+
+    // 获取 Markdown 文本
+    var markdownText = "# Hello, Markdown!\n\nThis is a **bold** text.";
+
+    // 将 Markdown 转换为 HTML
+    var html = converter.makeHtml(markdownText);
+
+    // 将转换后的 HTML 显示在页面上
+    document.getElementById("markdown-content").innerHTML = html;
+</script>
+</body>
+</html>

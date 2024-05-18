@@ -208,6 +208,7 @@ body {
     background: var(--item_bg_color);
 }
 
+
 .left-des {
     display: flex;
     flex-direction: column;
@@ -359,15 +360,15 @@ body {
 
 
 .gradientText {
-
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-size: 200%;
     background-position: 0%;
     font-family: "title";
     animation: backgroundSizeAnimation 10s ease-in-out infinite;
-      background-image:  var(--gradient);
+    background-image: var(--gradients); /* 使用自定义属性 --gradient */
 }
+
 
 @keyframes backgroundSizeAnimation {
     0% {
@@ -392,8 +393,8 @@ body {
 
 }
 
-.purpleText {
-    color: var(--purple_text_color);
+.greenText {
+    color: #c0ffc2;
     font-weight: 800;
 }
 

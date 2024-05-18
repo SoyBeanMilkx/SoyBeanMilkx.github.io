@@ -148,23 +148,6 @@ document.addEventListener('DOMContentLoaded', function () {
     changeTheme(themeState);
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-   
-
     var fpsElement = document.createElement('div');
     fpsElement.id = 'fps';
     fpsElement.style.zIndex = '10000';
@@ -172,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function () {
     fpsElement.style.left = '0';
     document.body.insertBefore(fpsElement, document.body.firstChild);
 
-    var showFPS = (function () {
+/*    var showFPS = (function () {
         var requestAnimationFrame = window.requestAnimationFrame ||
             window.webkitRequestAnimationFrame ||
             window.mozRequestAnimationFrame ||
@@ -204,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         step();
-    })();
+    })();*/
     
     
     

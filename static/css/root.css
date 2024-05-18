@@ -46,6 +46,7 @@
 
 :root {
      /* 默认背景颜色 */
+    --gradients: linear-gradient(to right, #c0ffc2, #f69d9d); /* 这里定义了一个从红色到黄色的水平渐变 */
     --left_tag_item_hover: #bbb; /* 鼠标停靠时的背景颜色 */
 
 }
@@ -54,7 +55,7 @@
 
 /*非常吃性能,低配手机会卡顿*/
 /*卡片模糊背景＋黑色透明卡片+白色svg**/
-html {
+.theme1 {
     --name: 主题1;
     --main_bg_color: url(../img/background.jpg);
     --main_text_color: #eeeeee;
@@ -73,7 +74,7 @@ html {
      --fill:#ffffff;
 }
 
-html {
+.theme2 {
 
     /*图片模糊背景＋白色透明卡片+黑色svg*/
     --name: 主题2;
@@ -94,7 +95,7 @@ html {
      --fill:#000000;
 }
 
-html {
+.theme3 {
     /*蓝色渐变+黑色svg**/
 
     --name: 主题3;
@@ -117,7 +118,7 @@ html {
 
 
 
-html {
+.theme4 {
     /*白色简约+黑色svg**/
     --name: 主题4;
     --main_bg_color: #ffffff;
@@ -137,7 +138,7 @@ html {
      --fill:#000000;
 }
 
-html {
+.theme5 {
     /*图片模糊背景＋黑色透明卡片+白色svg**/
     --name: 主题5;
     --main_bg_color: url(../img/background.jpg);
@@ -153,6 +154,25 @@ html {
     --left_tag_item: rgb(27 42 57 / 20%);
     --card_filter: 0px;
     --back_filter: 19px;
+    --back_filter_color: #00000030;
+    --fill:#ffffff;
+}
+
+.theme_main {
+    --name: 主题6;
+    --main_bg_color: url(https://www.loliapi.com/acg/);
+    --main_text_color: #eeeeee;
+    --gradient: linear-gradient(120deg, #bd34fe, #e0321b 30%, #41d1ff 60%);
+    --purple_text_color: #747bff;
+    --text_bg_color: #00000040;
+    --item_bg_color: #00000038;
+    --item_hover_color: #33333338;
+    --item_left_title_color: #ffffff;
+    --item_left_text_color: #ffffff;
+    --footer_text_color: #ffffff;
+    --left_tag_item: rgb(27 42 57 / 20%);
+    --card_filter: 60px;
+    --back_filter: 25px;
     --back_filter_color: #00000030;
     --fill:#ffffff;
 }

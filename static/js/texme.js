@@ -45,13 +45,9 @@
     // Update "Configuration Options" section of README.md if any of the
     // following URLs is updated.
     options.markdownURL =
-        'https://cdn.jsdelivr.net/npm/marked@4.0.12/marked.min.js'
+        './static/js/marked.min.js'
     options.MathJaxURL =
         'https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js'
-    options.highlightjsURL =
-        'https://cdn.jsdelivr.net/npm/highlight.js@11.6.0/lib/index.min.js'
-    options.highlightjsCSSURL =
-        'https://cdn.jsdelivr.net/npm/highlight.js@11.6.0/styles/default.min.css'
   }
 
 

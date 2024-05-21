@@ -14,13 +14,21 @@
         .hljs {
             background: #eeeeee; /* 背景颜色 */
         }
+        /* 异步加载自定义字体 */
+        @font-face {
+            font-family: 'CustomFont';
+            src: url('/static/fonts/consola.ttf') format('truetype');
+            /* 添加其他字体格式以提高兼容性 */
+        }
+
+        /* 使用异步加载的自定义字体 */
         pre code {
-            font-family: "/static/fonts/consola.ttf", Courier, monospace; /* 举例使用 Courier New 字体 */
+            font-family: 'CustomFont', Courier, monospace; /* 优先使用自定义字体，如果加载失败则使用后备字体 */
         }
 
         /* 自定义样式，可选 */
         body {
-            font-family: '宋体';
+            font-family: '宋体', Arial, sans-serif; /* 设置系统默认字体 */
             padding: 20px;
             color: #333;
             line-height: 1.5;

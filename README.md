@@ -1,3 +1,3 @@
 ### My blog site
 
-#### [yuuki.cool](yuuki.cool)
+#### [yuuki.cool](https://yuuki.cool/)

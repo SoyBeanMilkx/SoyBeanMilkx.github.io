@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>blog</title>
+    <link rel="icon" href="./static/img/icon.jpg">
+    <script>window.texme = { style: 'none'}</script>
+    <script src="./static/js/texme.js"></script>
+    <link rel="stylesheet" href="./static/css/github.min.css">
+    <script src="./static/js/highlight.min.js"></script>
+    <link rel="stylesheet" href="./static/css/top_nav.css">
+    <script defer src="./static/js/top_nav.js"></script>
+
+    <style>
+        /*.hljs {
+            background: #eeeeee; !* 背景颜色 *!
+        }*/
+        /* 异步加载自定义字体 */
+        @font-face {
+            font-family: 'CustomFont';
+            src: url('/static/fonts/consola.ttf') format('truetype');
+            /* 添加其他字体格式以提高兼容性 */
+        }
+
+        /* 使用异步加载的自定义字体 */
+        pre code {
+            font-family: 'CustomFont', Courier, sans-serif;
+            scrollbar-width: thin;  /* Thin scrollbar */
+            scrollbar-darkshadow-color: #1f2327;
+            scrollbar-color: #8888 transparent;  /* Thumb and track color */
+        }
+
+        /* 自定义样式，可选 */
+        body {
+            font-family: '宋体', Arial, sans-serif; /* 设置系统默认字体 */
+            padding: 20px;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        main {
+            max-width: 40em;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        h1, h2, h3, h4, h5, h6, h7 {
+            margin: 1em 0 0.5em 0;
+            line-height: 1.2;
+        }
+
+        img {
+            max-width: 100%;
+        }
+
+        pre, code, samp, kbd, a {
+            color: #1fab89; /* Code color */
+            font-family: monospace, monospace;
+        }
+
+        pre {
+            background: #282c34; /* Code block background color */
+            box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* 阴影效果 */
+            padding: 1em;
+            border-radius: 10px; /* Add border radius */
+        }
+
+        blockquote{
+            background: #eee;
+            box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1); /* 阴影效果 */
+            padding: 1em;
+            border-radius: 10px; /* Add border radius */
+        }
+
+        pre {
+            overflow: auto;
+        }
+
+        blockquote {
+            border-left: medium solid #ccc;
+            margin: 1em 0;
+        }
+
+        blockquote :first-child {
+            margin-top: 0;
+        }
+
+        blockquote :last-child {
+            margin-bottom: 0;
+        }
+
+        table {
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: thin solid #999;
+            padding: 0.3em 0.4em;
+            text-align: left;
+        }
+
+     /*   .fixed_btn{
+            width: 150px;
+            height: 50px;
+            border-radius: 25px;
+            border-color: transparent;
+            box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); !* 阴影效果 *!
+            line-height: 50px;
+            font-size: 22px;
+            position: fixed;
+            top: 30px;
+            right: 30px;
+        }*/
+
+    </style>
+</head>
+
+<!--<button class="fixed_btn"></button>-->
+<nav class="header__nav">
+    <div class="header__nav-container">
+        <a class="header__nav-container_link" href="./index.html">
+            <h1 class="header__nav-title" style="font-weight: bold;">Back Home</h1>
+        </a>
+        <ul class="header__nav-list">
+            <li class="header__nav-item"><a class="header__nav-link" href="./blog_list.html">Back Blogs</a></li>
+            <li class="header__nav-item"><a class="header__nav-link">Download page</a></li>
+            <li class="header__nav-item"><a class="header__nav-link" href="#bottom">Go Bottom</a></li>
+            <li class="header__nav-item"><a class="header__nav-link" href="#top">Back Top</a></li>
+        </ul>
+    </div>
+</nav>
+
+<!-- Anchor for top -->
+<div id="top"></div>
+
+<!-- Anchor for bottom -->
+<div id="bottom"></div>
+
+<script>
+    // 返回顶部
+    document.querySelector('a[href="#top"]').addEventListener('click', function(e) {
+        e.preventDefault(); // 阻止默认行为
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+
+    // 返回底部
+    document.querySelector('a[href="#bottom"]').addEventListener('click', function(e) {
+        e.preventDefault(); // 阻止默认行为
+        window.scrollTo({
+            top: document.body.scrollHeight,
+            behavior: 'smooth'
+        });
+    });
+</script>
+
+<div id="markdown-container" style="margin-top: 80px;"></div>
+
+<script>
+
+    window.addEventListener('scroll', function() {
+        var scrollToTopBtn = document.getElementById('scrollToTopBtn');
+        if (window.pageYOffset > 100) { // 如果页面向下滚动超过 100px
+            scrollToTopBtn.style.display = 'none'; // 显示按钮
+        } else {
+            scrollToTopBtn.style.display = 'block'; // 否则隐藏按钮
+        }
+    });
+
+    fetch('/blogs/Neural_Networks/Neural_Networks.md')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.text();
+        })
+        .then(data => {
+            var str = data;
+            console.log('Markdown file content loaded successfully');
+
+            var container = document.getElementById('markdown-container');
+            container.innerHTML = '<textarea style="display:none;">' + str + '</textarea>';
+
+            texme.render(container);
+        })
+        .catch(error => {
+            console.error('Error fetching the markdown file:', error);
+        });
+
+</script>
+
+</body>
+</html>

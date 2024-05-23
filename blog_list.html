@@ -27,43 +27,42 @@
         </nav>
     </section>
 
-<script>
-    const jsonDataPath = './__post/blog_list.json';
-    const menu = document.getElementById('articleMenu');
+    <script>
+        const jsonDataPath = './post/blog_list.json';
+        const menu = document.getElementById('articleMenu');
 
-    console.log('Fetching JSON from:', jsonDataPath);
+        console.log('Fetching JSON from:', jsonDataPath);
 
-    fetch(jsonDataPath)
-        .then(response => {
-            console.log('Response status:', response.status);
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('JSON data loaded:', data);
-            data.articles.forEach(article => {
-                const menuItem = document.createElement('a');
-                menuItem.classList.add('menu__item');
-                menuItem.href = `./blog.html?path=${encodeURIComponent(article.path)}`;
+        fetch(jsonDataPath)
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('JSON data loaded:', data);
+                data.articles.forEach(article => {
+                    const menuItem = document.createElement('a');
+                    menuItem.classList.add('menu__item');
+                    menuItem.href = `./blog.html?path=${encodeURIComponent(article.path)}`;
 
-                const itemName = document.createElement('span');
-                itemName.classList.add('menu__item-name');
-                itemName.textContent = article.title;
+                    const itemName = document.createElement('span');
+                    itemName.classList.add('menu__item-name');
+                    itemName.textContent = article.title;
 
-                const itemLabel = document.createElement('span');
-                itemLabel.classList.add('menu__item-label');
-                itemLabel.textContent = article.date;
+                    const itemLabel = document.createElement('span');
+                    itemLabel.classList.add('menu__item-label');
+                    itemLabel.textContent = article.date;
 
-                menuItem.appendChild(itemName);
-                menuItem.appendChild(itemLabel);
-                menu.appendChild(menuItem);
-            });
-        })
-        .catch(error => console.error('Error loading JSON data:', error));
-</script>
-
+                    menuItem.appendChild(itemName);
+                    menuItem.appendChild(itemLabel);
+                    menu.appendChild(menuItem);
+                });
+            })
+            .catch(error => console.error('Error loading JSON data:', error));
+    </script>
 
 </main>
 <script src="./static/js/charming.min.js"></script>

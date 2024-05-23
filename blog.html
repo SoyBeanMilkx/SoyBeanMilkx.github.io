@@ -124,7 +124,6 @@
         </a>
         <ul class="header__nav-list">
             <li class="header__nav-item"><a class="header__nav-link" href="./blog_list.html">Back Blogs</a></li>
-            <li class="header__nav-item"><a class="header__nav-link">Download page</a></li>
             <li class="header__nav-item"><a class="header__nav-link" href="#bottom">Go Bottom</a></li>
             <li class="header__nav-item"><a class="header__nav-link" href="#top">Back Top</a></li>
         </ul>
@@ -170,7 +169,10 @@
         }
     });
 
-    fetch('/blogs/Neural_Networks/Neural_Networks.md')
+    const urlParams = new URLSearchParams(window.location.search);
+    const articlePath = urlParams.get('path');
+
+    fetch(articlePath)
         .then(response => {
             if (!response.ok) {
                 throw new Error('Network response was not ok');

@@ -31,8 +31,6 @@
         const jsonDataPath = './post/blog_list.json';
         const menu = document.getElementById('articleMenu');
 
-        console.log('Fetching JSON from:', jsonDataPath);
-
         fetch(jsonDataPath)
             .then(response => {
                 console.log('Response status:', response.status);

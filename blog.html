@@ -26,6 +26,7 @@
         /* 使用异步加载的自定义字体 */
         pre code {
             font-family: 'CustomFont', Courier, sans-serif;
+            mask-size: 10px;
             scrollbar-width: thin;  /* Thin scrollbar */
             scrollbar-darkshadow-color: #1f2327;
             scrollbar-color: #8888 transparent;  /* Thumb and track color */
@@ -160,17 +161,9 @@
 
 <script>
 
-    window.addEventListener('scroll', function() {
-        var scrollToTopBtn = document.getElementById('scrollToTopBtn');
-        if (window.pageYOffset > 100) { // 如果页面向下滚动超过 100px
-            scrollToTopBtn.style.display = 'none'; // 显示按钮
-        } else {
-            scrollToTopBtn.style.display = 'block'; // 否则隐藏按钮
-        }
-    });
-
     const urlParams = new URLSearchParams(window.location.search);
     const articlePath = urlParams.get('path');
+    console.log('Fetching JSON from:', articlePath);
 
     fetch(articlePath)
         .then(response => {
@@ -183,14 +176,12 @@
             var str = data;
             console.log('Markdown file content loaded successfully');
 
-            var container = document.getElementById('markdown-container');
-            container.innerHTML = '<textarea style="display:none;">' + str + '</textarea>';
-
-            texme.render(container);
+            texme.renderPage(str);
         })
         .catch(error => {
             console.error('Error fetching the markdown file:', error);
         });
+
 
 </script>
 

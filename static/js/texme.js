@@ -360,24 +360,13 @@
   /**
    * Set page to display the rendered content as HTML.
    */
-  texme.renderPage = function () {
-    const textareaElements = window.document.getElementsByTagName('textarea');
+  texme.renderPage = function (markdownText) {
     const outputElement = window.document.createElement('main');
-    let inputText;
     let title;
-
-    // Remove input from page after reading it into a local variable.
-    if (textareaElements.length > 0) {
-      inputText = textareaElements[0].value.trim();
-      textareaElements[0].remove();
-    } else {
-      inputText = window.document.body.innerHTML.trim();
-      window.document.body.innerHTML = '';
-    }
 
     // Set title if it is not specified explicitly.
     if (typeof window.document.title === 'undefined' || window.document.title === '') {
-      title = inputText.split('\n', 1)[0].replace(/^\s*#*\s*|\s*#*\s*$/g, '');
+      title = markdownText.split('\n', 1)[0].replace(/^\s*#*\s*|\s*#*\s*$/g, '');
       window.document.title = title;
     }
 
@@ -397,7 +386,7 @@
     window.document.head.appendChild(metaElement);
 
     // Render the output.
-    outputElement.innerHTML = texme.render(inputText);
+    outputElement.innerHTML = texme.render(markdownText);
 
     // Typeset LaTeX.
     if (options.useMathJax) {
@@ -422,6 +411,9 @@
       options.onRenderPage();
     }
   };
+
+
+
 
 // Function to copy code to clipboard
   function copyToClipboard(block) {

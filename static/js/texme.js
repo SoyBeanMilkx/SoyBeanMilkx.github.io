@@ -36,7 +36,7 @@
    * Set default configuration options.
    */
   texme.setDefaultOptions = function () {
-    options.renderOnLoad = true
+    options.renderOnLoad = false
     options.useMathJax = true
     options.protectMath = true
     options.style = 'viewer'

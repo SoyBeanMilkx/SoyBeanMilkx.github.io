@@ -388,29 +388,52 @@
     // Render the output.
     outputElement.innerHTML = texme.render(markdownText);
 
-    // Typeset LaTeX.
+    // Typeset LaTeX if MathJax is used.
     if (options.useMathJax) {
-      window.MathJax.typesetPromise();
+      if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+        window.MathJax.typesetPromise().then(() => {
+          // Optionally, re-render the markdown if necessary
+          // outputElement.innerHTML += texme.render(markdownText);
+          window.MathJax.typesetPromise();
+        }).catch((error) => {
+          console.error('An error occurred while typesetting with MathJax:', error);
+        });
+      } else {
+        console.error('MathJax is not properly loaded or typesetPromise is not available.');
+      }
     }
 
     // Apply syntax highlighting and add copy buttons
-    document.querySelectorAll('pre code').forEach((block) => {
-      window.hljs.highlightBlock(block);
+    function applyHighlighting() {
+      document.querySelectorAll('pre code').forEach((block) => {
+        if (window.hljs && typeof window.hljs.highlightBlock === 'function') {
+          window.hljs.highlightBlock(block);
 
-      // Create and append the copy button
-      const copyButton = document.createElement('button');
-      copyButton.className = 'copy-button';
-      copyButton.textContent = 'Copy';
-      copyButton.onclick = () => copyToClipboard(block);
-      block.parentNode.style.position = 'relative'; // Ensure the parent <pre> is relatively positioned
-      block.parentNode.appendChild(copyButton);
-    });
+          // Create and append the copy button
+          const copyButton = document.createElement('button');
+          copyButton.className = 'copy-button';
+          copyButton.textContent = 'Copy';
+          copyButton.onclick = () => copyToClipboard(block);
+          block.parentNode.style.position = 'relative'; // Ensure the parent <pre> is relatively positioned
+          block.parentNode.appendChild(copyButton);
+        } else {
+          console.error('highlight.js is not properly loaded or highlightBlock function is not available.');
+        }
+      });
+    }
+
+    if (document.readyState === 'complete') {
+      applyHighlighting();
+    } else {
+      window.addEventListener('load', applyHighlighting);
+    }
 
     // Invoke onRenderPage callback (if configured).
     if (typeof options.onRenderPage !== 'undefined') {
       options.onRenderPage();
     }
   };
+
 
 
 
@@ -517,8 +540,10 @@
             tags: 'ams'
           },
           startup: {
-            typeset: false
+            typeset: true
+
           }
+
         }
 
         loadjs(options.MathJaxURL)

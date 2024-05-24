@@ -45,7 +45,7 @@
     // Update "Configuration Options" section of README.md if any of the
     // following URLs is updated.
     options.markdownURL =
-        './static/js/marked.min.js'
+        'https://cdn.jsdelivr.net/npm/marked@4.0.12/marked.min.js'
     options.MathJaxURL =
         'https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js'
   }
@@ -325,6 +325,15 @@
     return markdown(s)
   }
 
+/*  texme.renderMarkdown = function (s) {
+    if (typeof markdown === 'function') {
+      return markdown(s);
+    } else {
+      console.error('marked.js is not properly loaded.');
+      return 'Please retry';
+    }
+  }*/
+
   /**
    * Render Markdown content while being careful that LaTeX content is
    * not interpreted and rendered as Markdown.
@@ -529,29 +538,26 @@
 
       loadjs(options.markdownURL, function () {
         markdown = window.marked.parse
+
+        if (options.renderOnLoad) {
+          window.onload = function () {
+            texme.renderPage(str)
+          }
+        }
       })
 
       if (options.useMathJax) {
-        // MathJax configuration.
         window.MathJax = {
           tex: {
-            // Enable $...$ as delimiter for inline math.
             inlineMath: [['$', '$'], ['\\(', '\\)']],
             tags: 'ams'
           },
           startup: {
             typeset: true
-
           }
-
         }
 
         loadjs(options.MathJaxURL)
-      }
-
-      if (options.renderOnLoad) {
-        // Render Markdown + LaTeX after the document loads.
-        window.onload = texme.renderPage
       }
 
       window.texme = texme

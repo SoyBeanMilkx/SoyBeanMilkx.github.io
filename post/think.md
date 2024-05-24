@@ -1,2 +1,2 @@
-## To do list
-I don`t want to do anything now.
+**I don`t want to do anything now.** ***2024.05.24***
+**我要破防了，以一种极其不优雅的形式解决了困扰了我三天的bug，虽然解决了bug，但是没有解决我是个飞舞的事实** ***2024.05.24***

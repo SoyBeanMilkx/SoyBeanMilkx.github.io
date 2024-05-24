@@ -112,6 +112,9 @@
             } catch (error) {
                 // 处理异常的代码
                 console.error('An error occurred while rendering the page:', error);
+                setTimeout(function() {
+                    window.location.reload(); // 这行代码将在渲染完成后自动刷新页面
+                }, 100); // 延迟 1000 毫秒（1 秒）后刷新，你可以根据需要调整延迟时间
             }
 
         })

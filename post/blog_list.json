@@ -1,6 +1,11 @@
 {
   "articles": [
     {
+      "title": "• Face recognition scheme based on Opencv",
+      "path": "/post/blogs/Opencv_FaceCheck/opencv_facecheck.md",
+      "date": "2024-05-28"
+    },
+    {
       "title": "• Discussion on the bottom layer of MPL architecture neural network",
       "path": "/post/blogs/Neural_Networks/Neural_Networks.md",
       "date": "2024-05-15"

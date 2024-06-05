@@ -1,6 +1,11 @@
 {
   "articles": [
     {
+      "title": "• ELF file encryption and dynamic self-decryption",
+      "path": "/post/blogs/Elf_encrypt/Elf_encrypt.md",
+      "date": "2024-06-05"
+    },
+    {
       "title": "• Face recognition scheme based on Opencv",
       "path": "/post/blogs/Opencv_FaceCheck/opencv_facecheck.md",
       "date": "2024-05-28"

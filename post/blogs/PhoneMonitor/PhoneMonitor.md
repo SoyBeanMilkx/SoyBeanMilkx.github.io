@@ -1337,11 +1337,11 @@ namespace Motinor
 
 ### 效果展示
 
-<img title="" src="1.png" alt="QQ图片20240723110910.png" width="678">
+<img title="" src="./post/blogs/PhoneMonitor/1.png" alt="yuuki" width="678">
 
-![QQ图片20240723110919.png](2.png)
+![yuuki](./post/blogs/PhoneMonitor/2.png)
 
-![QQ图片20240723110928.png](3.png)
+![yuuki](./post/blogs/PhoneMonitor/3.png)
 
 还好吧，CPU跑满基本上能跑到稳定30帧(魅族21PRO arm-v8a **Qualcomm Snapdragon 8 Gen 3**)，不压缩传输单跑能跑到40帧左右
 

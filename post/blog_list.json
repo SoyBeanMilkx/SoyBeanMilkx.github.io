@@ -1,6 +1,11 @@
 {
   "articles": [
     {
+      "title": "• Transform your old phone into a home monitor",
+      "path": "/post/blogs/PhoneMonitor/PhoneMonitor.md",
+      "date": "2024-07-23"
+    },
+    {
       "title": "• ELF file encryption and dynamic self-decryption",
       "path": "/post/blogs/Elf_encrypt/Elf_encrypt.md",
       "date": "2024-06-05"

@@ -1,6 +1,11 @@
 {
   "articles": [
     {
+      "title": "• Read phone CPU temperature and battery temperature and power",
+      "path": "/post/blogs/CPU_TEMP/CPU_TEMP.md",
+      "date": "2024-08-25"
+    },
+    {
       "title": "• Transform your old phone into a home monitor",
       "path": "/post/blogs/PhoneMonitor/PhoneMonitor.md",
       "date": "2024-07-23"

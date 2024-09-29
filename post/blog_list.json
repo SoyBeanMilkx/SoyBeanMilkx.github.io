@@ -1,6 +1,11 @@
 {
   "articles": [
     {
+      "title": "• Build the compilation environment of the kernel module",
+      "path": "/post/blogs/KernelModule/KernelModule.md",
+      "date": "2024-09-29"
+    },
+    {
       "title": "• Read phone CPU temperature and battery temperature and power",
       "path": "/post/blogs/CPU_TEMP/CPU_TEMP.md",
       "date": "2024-08-25"

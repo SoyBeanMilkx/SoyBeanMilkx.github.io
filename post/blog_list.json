@@ -1,6 +1,11 @@
 {
   "articles": [
     {
+      "title": "• How to use Clion write the Aptch kernel module",
+      "path": "/post/blogs/KernelModule/KPM_Clion.md",
+      "date": "2024-10-13"
+    },
+    {
       "title": "• Build the compilation environment of the kernel module",
       "path": "/post/blogs/KernelModule/KernelModule.md",
       "date": "2024-09-29"

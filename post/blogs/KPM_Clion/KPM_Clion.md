@@ -14,11 +14,11 @@
 
 工具链配置如图所示
 
-![](D:\Note\Image\ApatchKPM\2024-10-13-13-10-50-image.png)
+![](./post/blogs/KPM_Clion/2024-10-13-13-10-50-image.png)
 
 cmake配置如图所示
 
-![](D:\Note\Image\ApatchKPM\2024-10-13-13-11-35-image.png)
+![](./post/blogs/KPM_Clion/2024-10-13-13-11-35-image.png)
 
 注意Cmake选项中添加这段
 

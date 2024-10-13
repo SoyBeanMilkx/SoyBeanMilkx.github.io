@@ -22,7 +22,7 @@ cmake配置如图所示
 
 注意Cmake选项中添加这段
 
-```cmake
+```
 -DCMAKE_TOOLCHAIN_FILE=$NDK_PATH/build/cmake/android.toolchain.cmake
 -DCMAKE_BUILD_TYPE=Release
 -DANDROID_PLATFORM=android-33
@@ -31,7 +31,7 @@ cmake配置如图所示
 
 CmakeLists中我是这么写的，具体情况看自己
 
-```cmake
+```
 cmake_minimum_required(VERSION 3.25.2)
 project(sys_security C)
 

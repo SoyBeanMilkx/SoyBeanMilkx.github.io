@@ -1,6 +1,11 @@
 {
   "articles": [
     {
+      "title": "• Pass frida check(libmsaoaidsec.so) & two methods",
+      "path": "/post/blogs/PassFridacheck/PassFridacheck.md",
+      "date": "2024-10-13"
+    },
+    {
       "title": "• How to use Clion write the Aptch kernel module",
       "path": "/post/blogs/KPM_Clion/KPM_Clion.md",
       "date": "2024-10-13"

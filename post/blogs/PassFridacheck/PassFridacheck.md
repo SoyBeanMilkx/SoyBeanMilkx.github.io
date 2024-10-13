@@ -381,7 +381,7 @@ Thank you for using Frida!
 
 按下**G**跳转到上述地址，我们可以一个个尝试，比如我们先打开**0x1b8d4**处的函数
 
-```assembly
+```
 LOAD:000000000001B8D4                               ; void __noreturn sub_1B8D4()
 LOAD:000000000001B8D4                               sub_1B8D4                               ; DATA XREF: sub_1B924+520↓o
 LOAD:000000000001B8D4                                                                       ; sub_1B924+52C↓o

@@ -1,6 +1,11 @@
 {
   "articles": [
     {
+      "title": "• Analysis and implementation of the loading process of ELF files",
+      "path": "/post/blogs/ELF_Loador/ELF_Loador.md",
+      "date": "2024-12-12"
+    },
+    {
       "title": "• Pass frida check(libmsaoaidsec.so) & two methods",
       "path": "/post/blogs/PassFridacheck/PassFridacheck.md",
       "date": "2024-10-13"

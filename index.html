@@ -140,7 +140,7 @@
       <div class="category-box">
             <a class="category-link" href="/categories/Android/">
                 Android
-                <div class="category-count">1</div>
+                <div class="category-count">2</div>
             </a>
         
             <a class="category-link" href="/categories/Life/">
@@ -157,7 +157,7 @@
   <div class="widget-wrap">
     <div class="widget">
       <h3 class="widget-title">Tags</h3>
-      <ul class="widget-tag-list" itemprop="keywords"><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/elf/" rel="tag">elf</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/idea/" rel="tag">idea</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/linker/" rel="tag">linker</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/photo/" rel="tag">photo</a></li></ul>
+      <ul class="widget-tag-list" itemprop="keywords"><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/elf/" rel="tag">elf</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/env-check/" rel="tag">env_check</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/frida/" rel="tag">frida</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/idea/" rel="tag">idea</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/linker/" rel="tag">linker</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/photo/" rel="tag">photo</a></li></ul>
     </div>
   </div>
 
@@ -171,7 +171,7 @@
       
         <a class="archive-link" href="/archives/2024/12 ">
           December 2024 
-          <div class="archive-count">2 </div>
+          <div class="archive-count">3 </div>
         </a>
       
     </div>
@@ -188,6 +188,12 @@
           <a class="recent-link" href="/2024/12/26/ELFLoador/" title="ElfLoader的实现及原理" >
             <div class="recent-link-text">
               ElfLoader的实现及原理
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2024/12/25/PassFridacheck/" title="过Frida检测的一般思路" >
+            <div class="recent-link-text">
+              过Frida检测的一般思路
             </div>
           </a>
         
@@ -295,6 +301,83 @@ list_add_tail
    
 
 
+<article id="post-PassFridacheck" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+   
+  <div class="article-inner">
+    <div class="article-main">
+      <header class="article-header">
+        
+<div class="main-title-bar">
+  <div class="main-title-dot"></div>
+  
+    
+      <h1 itemprop="name">
+        <a class="p-name article-title" href="/2024/12/25/PassFridacheck/">过Frida检测的一般思路</a>
+      </h1>
+    
+  
+</div>
+
+        <div class='meta-info-bar'>
+          <div class="meta-info">
+  <time class="dt-published" datetime="2024-12-25T15:59:41.000Z" itemprop="datePublished">2024-12-25</time>
+</div>
+          <div class="need-seperator meta-info">
+            <div class="meta-cate-flex">
+  
+  <a class="meta-cate-link" href="/categories/Android/">Android</a>
+   
+</div>
+  
+          </div>
+          <div class="wordcount need-seperator meta-info">
+            19k words 
+          </div>
+        </div>
+        
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/env-check/" rel="tag">env_check</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/frida/" rel="tag">frida</a></li></ul>
+
+      </header>
+      <div class="e-content article-entry" itemprop="articleBody">
+        
+          <div class="truncate-text">
+            
+              过Frida检测通用思路0x00：环境设备：MEIzu21PRO
+系统版本：Android 14
+Frida-Server：16.4.10
+小猿口算：3.93.3
+0x01：问题在我使用frida尝试注入，进程直接被杀
+1234567891011121314151617PS D:\frida_hook\xiaoyuan&gt; frida -U -l hook.js -f com.fenbi.android.leo     ____    / _  |   Frida 16.4.10 - A world-class dynamic instrumentation toolkit   | (_| |    &gt; _  |   Commands:   /_/ |_|       help      -&gt; Displays the help system   . . . .       object?   -&gt; Display information about &#x27;object&#x27;   . . . .       exit/quit -&gt; Exi...
+            
+          </div>
+        
+      </div>
+
+         
+    </div>
+    
+     
+    <a class="right-panel  non-pic  "
+      
+      href="/2024/12/25/PassFridacheck/" 
+    >
+       
+      <i class="fa-solid fa-angle-right non-pic"></i>
+       
+    </a>
+     
+  </div>
+  
+</article>
+
+
+
+
+
+
+   
+
+
 <article id="post-HelloBlog" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
    
   <div class="article-inner">
@@ -325,7 +408,7 @@ list_add_tail
   
           </div>
           <div class="wordcount need-seperator meta-info">
-            206 words 
+            246 words 
           </div>
         </div>
         
@@ -339,6 +422,8 @@ list_add_tail
               NEW BLOG!!这是我新的博客，感觉之前的有点唐(其实挺简洁大方的)，而且Latex的渲染似乎会有问题，所以就有了现在的。如果想要浏览之前的文章可以移步 Yuuki。
 这个页面以后用来存放一些灵感和我拍的照片吧。但是由于markdown渲染html的样式看图片可能不太舒服，我以后应该会专门写一个界面用来展示我的无敌摄影作品。
 IDEAS:猪比课设怎么跟沙比一样，天天早八还要点名，我燥密码的比    -2024.12.26
+
+妈比的怎么那么多东西要学啊，自己怎么跟个fvv一样，无语啦    -2024.12.31
 
             
           </div>
@@ -405,5 +490,20 @@ IDEAS:猪比课设怎么跟沙比一样，天天早八还要点名，我燥密�
 
   </div>
   <script src="/js/light-dark-switch.js"></script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
 </body>
 </html>

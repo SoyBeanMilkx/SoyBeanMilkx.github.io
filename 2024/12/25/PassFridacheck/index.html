@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+
+
+<html theme="dark" showBanner="true" hasBanner="true" > 
+<link href="https://cdn.staticfile.org/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet">
+<link href="https://cdn.staticfile.org/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet">
+<link href="https://cdn.staticfile.org/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet">
+<script src="/js/color.global.min.js" ></script>
+<script src="/js/load-settings.js" ></script>
+<head>
+  <meta charset="utf-8">
+  
+  
+  
+
+  
+  <title>过Frida检测的一般思路 | Yuuki</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <link rel="preload" href="/css/fonts/Roboto-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+  <link rel="preload" href="/css/fonts/Roboto-Bold.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+
+  <meta name="description" content="过Frida检测通用思路0x00：环境设备：MEIzu21PRO 系统版本：Android 14 Frida-Server：16.4.10 小猿口算：3.93.3 0x01：问题在我使用frida尝试注入，进程直接被杀 1234567891011121314151617PS D:\frida_hook\xiaoyuan&gt; frida -U -l hook.js -f com.fenbi.an">
+<meta property="og:type" content="article">
+<meta property="og:title" content="过Frida检测的一般思路">
+<meta property="og:url" content="http://example.com/2024/12/25/PassFridacheck/index.html">
+<meta property="og:site_name" content="Yuuki">
+<meta property="og:description" content="过Frida检测通用思路0x00：环境设备：MEIzu21PRO 系统版本：Android 14 Frida-Server：16.4.10 小猿口算：3.93.3 0x01：问题在我使用frida尝试注入，进程直接被杀 1234567891011121314151617PS D:\frida_hook\xiaoyuan&gt; frida -U -l hook.js -f com.fenbi.an">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2024-12-25T15:59:41.000Z">
+<meta property="article:modified_time" content="2024-12-31T05:27:40.722Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="frida">
+<meta property="article:tag" content="env_check">
+<meta name="twitter:card" content="summary">
+  
+  
+    <link rel="shortcut icon" href="/site_img/icon.jpg">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+  
+  
+    
+<div id="banner" class="">
+  <img src="/site_img/backg.png" itemprop="image">
+  <div id="banner-dim"></div>
+</div>
+ 
+   
+  <div id="main-grid" class="  ">
+    <div id="nav" class=""  >
+      <navbar id="navbar">
+  <nav id="title-nav">
+    <a href="/">
+      <div id="vivia-logo">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+      <div>Yuuki </div>
+    </a>
+  </nav>
+  <nav id="main-nav">
+    
+      <a class="main-nav-link" href="/">Home</a>
+    
+      <a class="main-nav-link" href="/archives">Archives</a>
+    
+      <a class="main-nav-link" href="/about">About</a>
+    
+  </nav>
+  <nav id="sub-nav">
+    <a id="theme-btn" class="nav-icon">
+      <span class="light-mode-icon"><svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M438.5-829.913v-48q0-17.452 11.963-29.476 11.964-12.024 29.326-12.024 17.363 0 29.537 12.024t12.174 29.476v48q0 17.452-11.963 29.476-11.964 12.024-29.326 12.024-17.363 0-29.537-12.024T438.5-829.913Zm0 747.826v-48q0-17.452 11.963-29.476 11.964-12.024 29.326-12.024 17.363 0 29.537 12.024t12.174 29.476v48q0 17.452-11.963 29.476-11.964 12.024-29.326 12.024-17.363 0-29.537-12.024T438.5-82.087ZM877.913-438.5h-48q-17.452 0-29.476-11.963-12.024-11.964-12.024-29.326 0-17.363 12.024-29.537t29.476-12.174h48q17.452 0 29.476 11.963 12.024 11.964 12.024 29.326 0 17.363-12.024 29.537T877.913-438.5Zm-747.826 0h-48q-17.452 0-29.476-11.963-12.024-11.964-12.024-29.326 0-17.363 12.024-29.537T82.087-521.5h48q17.452 0 29.476 11.963 12.024 11.964 12.024 29.326 0 17.363-12.024 29.537T130.087-438.5Zm660.174-290.87-34.239 32q-12.913 12.674-29.565 12.174-16.653-.5-29.327-13.174-12.674-12.673-12.554-28.826.12-16.152 12.794-28.826l33-35q12.913-12.674 30.454-12.674t30.163 12.847q12.709 12.846 12.328 30.826-.38 17.98-13.054 30.653ZM262.63-203.978l-32 34q-12.913 12.674-30.454 12.674t-30.163-12.847q-12.709-12.846-12.328-30.826.38-17.98 13.054-30.653l33.239-31q12.913-12.674 29.565-12.174 16.653.5 29.327 13.174 12.674 12.673 12.554 28.826-.12 16.152-12.794 28.826Zm466.74 33.239-32-33.239q-12.674-12.913-12.174-29.565.5-16.653 13.174-29.327 12.673-12.674 28.826-13.054 16.152-.38 28.826 12.294l35 33q12.674 12.913 12.674 30.454t-12.847 30.163q-12.846 12.709-30.826 12.328-17.98-.38-30.653-13.054ZM203.978-697.37l-34-33q-12.674-12.913-13.174-29.945-.5-17.033 12.174-29.707t31.326-13.293q18.653-.62 31.326 13.054l32 34.239q11.674 12.913 11.174 29.565-.5 16.653-13.174 29.327-12.673 12.674-28.826 12.554-16.152-.12-28.826-12.794ZM480-240q-100 0-170-70t-70-170q0-100 70-170t170-70q100 0 170 70t70 170q0 100-70 170t-170 70Zm-.247-82q65.703 0 111.475-46.272Q637-414.544 637-480.247t-45.525-111.228Q545.95-637 480.247-637t-111.475 45.525Q323-545.95 323-480.247t45.525 111.975Q414.05-322 479.753-322ZM481-481Z"/></svg></span>
+      <span class="dark-mode-icon"><svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M480.239-116.413q-152.63 0-258.228-105.478Q116.413-327.37 116.413-480q0-130.935 77.739-227.435t206.304-125.043q43.022-9.631 63.87 10.869t3.478 62.805q-8.891 22.043-14.315 44.463-5.424 22.42-5.424 46.689 0 91.694 64.326 155.879 64.325 64.186 156.218 64.186 24.369 0 46.978-4.946 22.609-4.945 44.413-14.076 42.826-17.369 62.967 1.142 20.142 18.511 10.511 61.054Q807.174-280 712.63-198.206q-94.543 81.793-232.391 81.793Zm0-95q79.783 0 143.337-40.217 63.554-40.218 95.793-108.283-15.608 4.044-31.097 5.326-15.49 1.283-31.859.805-123.706-4.066-210.777-90.539-87.071-86.473-91.614-212.092-.24-16.369.923-31.978 1.164-15.609 5.446-30.978-67.826 32.478-108.282 96.152Q211.652-559.543 211.652-480q0 111.929 78.329 190.258 78.329 78.329 190.258 78.329ZM466.13-465.891Z"/></svg></span>
+    </a>
+    
+    <div id="nav-menu-btn" class="nav-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M177.37-252.282q-17.453 0-29.477-11.964-12.024-11.963-12.024-29.326t12.024-29.537q12.024-12.174 29.477-12.174h605.26q17.453 0 29.477 11.964 12.024 11.963 12.024 29.326t-12.024 29.537q-12.024 12.174-29.477 12.174H177.37Zm0-186.218q-17.453 0-29.477-11.963-12.024-11.964-12.024-29.326 0-17.363 12.024-29.537T177.37-521.5h605.26q17.453 0 29.477 11.963 12.024 11.964 12.024 29.326 0 17.363-12.024 29.537T782.63-438.5H177.37Zm0-186.217q-17.453 0-29.477-11.964-12.024-11.963-12.024-29.326t12.024-29.537q12.024-12.174 29.477-12.174h605.26q17.453 0 29.477 11.964 12.024 11.963 12.024 29.326t-12.024 29.537q-12.024 12.174-29.477 12.174H177.37Z"/></svg>
+    </div>
+  </nav>
+</navbar>
+<div id="nav-dropdown" class="hidden">
+  <div id="dropdown-link-list">
+    
+      <a class="nav-dropdown-link" href="/">Home</a>
+    
+      <a class="nav-dropdown-link" href="/archives">Archives</a>
+    
+      <a class="nav-dropdown-link" href="/about">About</a>
+    
+     
+    </div>
+</div>
+<script>
+  let dropdownBtn = document.getElementById("nav-menu-btn");
+  let dropdownEle = document.getElementById("nav-dropdown");
+  dropdownBtn.onclick = function() {
+    dropdownEle.classList.toggle("hidden");
+  }
+</script>
+    </div>
+    <div id="sidebar-wrapper">
+      <sidebar id="sidebar">
+  
+    <div class="widget-wrap">
+  <div class="info-card">
+    <div class="avatar">
+      
+        <image src=/site_img/icon.jpg></image>
+      
+      <div class="img-dim"></div>
+    </div>
+    <div class="info">
+      <div class="username">Yuuki </div>
+      <div class="dot"></div>
+      <div class="subtitle">不说话 装高手 </div>
+      <div class="link-list">
+        
+          <a class="link-btn" target="_blank" rel="noopener" href="https://x.com/LiYangv?t=kbZV9-LGilEE-2pg_2GBeQ&s=09" title="Twitter"><i class="fa-brands fa-twitter"></i></a>
+        
+          <a class="link-btn" target="_blank" rel="noopener" href="https://steamcommunity.com/profiles/76561199358468625/" title="Steam"><i class="fa-brands fa-steam"></i></a>
+        
+          <a class="link-btn" target="_blank" rel="noopener" href="https://github.com/SoyBeanMilkx" title="GitHub"><i class="fa-brands fa-github"></i></a>
+         
+      </div>  
+    </div>
+  </div>
+</div>
+
+  
+  <div class="sticky">
+    
+      
+
+
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Categories</h3>
+      <div class="category-box">
+            <a class="category-link" href="/categories/Android/">
+                Android
+                <div class="category-count">2</div>
+            </a>
+        
+            <a class="category-link" href="/categories/Life/">
+                Life
+                <div class="category-count">1</div>
+            </a>
+        </div>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Tags</h3>
+      <ul class="widget-tag-list" itemprop="keywords"><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/elf/" rel="tag">elf</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/env-check/" rel="tag">env_check</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/frida/" rel="tag">frida</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/idea/" rel="tag">idea</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/linker/" rel="tag">linker</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/photo/" rel="tag">photo</a></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Archives</h3>
+      
+      
+        <a class="archive-link" href="/archives/2024/12 ">
+          December 2024 
+          <div class="archive-count">3 </div>
+        </a>
+      
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Recent Posts</h3>
+      <ul>
+        
+          <a class="recent-link" href="/2024/12/26/ELFLoador/" title="ElfLoader的实现及原理" >
+            <div class="recent-link-text">
+              ElfLoader的实现及原理
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2024/12/25/PassFridacheck/" title="过Frida检测的一般思路" >
+            <div class="recent-link-text">
+              过Frida检测的一般思路
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2024/12/25/HelloBlog/" title="NEW BLOG!!" >
+            <div class="recent-link-text">
+              NEW BLOG!!
+            </div>
+          </a>
+        
+      </ul>
+    </div>
+  </div>
+
+    
+  </div>
+</sidebar>
+    </div>
+    <div id="content-body">
+       
+
+
+<article id="post-PassFridacheck" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  
+    
+   
+  <div class="article-inner">
+    <div class="article-main">
+      <header class="article-header">
+        
+<div class="main-title-bar">
+  <div class="main-title-dot"></div>
+  
+    
+      <h1 class="p-name article-title" itemprop="headline name">
+        过Frida检测的一般思路
+      </h1>
+    
+  
+</div>
+
+        <div class='meta-info-bar'>
+          <div class="meta-info">
+  <time class="dt-published" datetime="2024-12-25T15:59:41.000Z" itemprop="datePublished">2024-12-25</time>
+</div>
+          <div class="need-seperator meta-info">
+            <div class="meta-cate-flex">
+  
+  <a class="meta-cate-link" href="/categories/Android/">Android</a>
+   
+</div>
+  
+          </div>
+          <div class="wordcount need-seperator meta-info">
+            19k words 
+          </div>
+        </div>
+        
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/env-check/" rel="tag">env_check</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/frida/" rel="tag">frida</a></li></ul>
+
+      </header>
+      <div class="e-content article-entry" itemprop="articleBody">
+        
+          <h1 id="过Frida检测通用思路"><a href="#过Frida检测通用思路" class="headerlink" title="过Frida检测通用思路"></a>过Frida检测通用思路</h1><h2 id="0x00：环境"><a href="#0x00：环境" class="headerlink" title="0x00：环境"></a>0x00：环境</h2><p>设备：MEIzu21PRO</p>
+<p>系统版本：Android 14</p>
+<p>Frida-Server：16.4.10</p>
+<p>小猿口算：3.93.3</p>
+<h2 id="0x01：问题"><a href="#0x01：问题" class="headerlink" title="0x01：问题"></a>0x01：问题</h2><p>在我使用frida尝试注入，进程直接被杀</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">PS D:\frida_hook\xiaoyuan&gt; frida -U -l hook.js -f com.fenbi.android.leo</span><br><span class="line">     ____</span><br><span class="line">    / _  |   Frida 16.4.10 - A world-class dynamic instrumentation toolkit</span><br><span class="line">   | (_| |</span><br><span class="line">    &gt; _  |   Commands:</span><br><span class="line">   /_/ |_|       help      -&gt; Displays the help system</span><br><span class="line">   . . . .       object?   -&gt; Display information about &#x27;object&#x27;</span><br><span class="line">   . . . .       exit/quit -&gt; Exit</span><br><span class="line">   . . . .</span><br><span class="line">   . . . .   More info at https://frida.re/docs/home/</span><br><span class="line">   . . . .</span><br><span class="line">   . . . .   Connected to MEIZU 21 Pro (id=481QFGE9227R3)</span><br><span class="line">Spawned `com.fenbi.android.leo`. Resuming main thread!              </span><br><span class="line">[MEIZU 21 Pro::com.fenbi.android.leo ]-&gt; Process terminated</span><br><span class="line">[MEIZU 21 Pro::com.fenbi.android.leo ]-&gt;</span><br><span class="line"></span><br><span class="line">Thank you for using Frida!</span><br></pre></td></tr></table></figure>
+<h2 id="0x02：分析"><a href="#0x02：分析" class="headerlink" title="0x02：分析"></a>0x02：分析</h2><p>大多数frida检测都是在so层，少部分在java层，我们可以先hook一下dlopen查看一下app加载了哪些so文件。</p>
+<p>JS代码：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">hook_dlopen</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="title class_">Interceptor</span>.<span class="title function_">attach</span>(<span class="title class_">Module</span>.<span class="title function_">findExportByName</span>(<span class="literal">null</span>, <span class="string">&quot;android_dlopen_ext&quot;</span>),</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">onEnter</span>: <span class="keyword">function</span> (<span class="params">args</span>) &#123;</span><br><span class="line">                <span class="variable language_">this</span>.<span class="property">fileName</span> = args[<span class="number">0</span>].<span class="title function_">readCString</span>()</span><br><span class="line">                <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">`dlopen onEnter: <span class="subst">$&#123;<span class="variable language_">this</span>.fileName&#125;</span>`</span>)</span><br><span class="line">            &#125;, <span class="attr">onLeave</span>: <span class="keyword">function</span>(<span class="params">retval</span>)&#123;</span><br><span class="line">                <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">`dlopen onLeave fileName: <span class="subst">$&#123;<span class="variable language_">this</span>.fileName&#125;</span>`</span>)</span><br><span class="line">                <span class="keyword">if</span>(<span class="variable language_">this</span>.<span class="property">fileName</span> != <span class="literal">null</span> &amp;&amp; <span class="variable language_">this</span>.<span class="property">fileName</span>.<span class="title function_">indexOf</span>(<span class="string">&quot;libmsaoaidsec.so&quot;</span>) &gt;= <span class="number">0</span>)&#123;</span><br><span class="line">                    <span class="keyword">let</span> JNI_OnLoad = <span class="title class_">Module</span>.<span class="title function_">getExportByName</span>(<span class="variable language_">this</span>.<span class="property">fileName</span>, <span class="string">&#x27;JNI_OnLoad&#x27;</span>)</span><br><span class="line">                    <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">`dlopen onLeave JNI_OnLoad: <span class="subst">$&#123;JNI_OnLoad&#125;</span>`</span>)</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    );</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="title function_">setImmediate</span>(hook_dlopen)</span><br></pre></td></tr></table></figure>
+<p>输出日志：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">PS D:\frida_hook\xiaoyuan&gt; frida -U -l hook.js -f com.fenbi.android.leo</span><br><span class="line">     ____</span><br><span class="line">    / _  |   Frida 16.4.10 - A world-class dynamic instrumentation toolkit</span><br><span class="line">   | (_| |</span><br><span class="line">    &gt; _  |   Commands:</span><br><span class="line">   /_/ |_|       help      -&gt; Displays the help system</span><br><span class="line">   . . . .       object?   -&gt; Display information about &#x27;object&#x27;</span><br><span class="line">   . . . .       exit/quit -&gt; Exit</span><br><span class="line">   . . . .</span><br><span class="line">   . . . .   More info at https://frida.re/docs/home/</span><br><span class="line">   . . . .</span><br><span class="line">   . . . .   Connected to MEIZU 21 Pro (id=481QFGE9227R3)</span><br><span class="line">Spawned `com.fenbi.android.leo`. Resuming main thread!              </span><br><span class="line">[MEIZU 21 Pro::com.fenbi.android.leo ]-&gt; dlopen onEnter: /system/framework/oat/arm64/org.apache.http.legacy.odex</span><br><span class="line">dlopen onLeave fileName: /system/framework/oat/arm64/org.apache.http.legacy.odex</span><br><span class="line">dlopen onEnter: /data/app/~~A55TKEnXig6YeUSXhnkLPg==/com.fenbi.android.leo-O_2O3vNIVRfTPnY4TgeayQ==/oat/arm64/base.odex</span><br><span class="line">dlopen onLeave fileName: /data/app/~~A55TKEnXig6YeUSXhnkLPg==/com.fenbi.android.leo-O_2O3vNIVRfTPnY4TgeayQ==/oat/arm64/base.odex</span><br><span class="line">dlopen onEnter: libframework-connectivity-jni.so</span><br><span class="line">dlopen onLeave fileName: libframework-connectivity-jni.so</span><br><span class="line">dlopen onEnter: /data/app/~~A55TKEnXig6YeUSXhnkLPg==/com.fenbi.android.leo-O_2O3vNIVRfTPnY4TgeayQ==/lib/arm64/libmmkv.so</span><br><span class="line">dlopen onLeave fileName: /data/app/~~A55TKEnXig6YeUSXhnkLPg==/com.fenbi.android.leo-O_2O3vNIVRfTPnY4TgeayQ==/lib/arm64/libmmkv.so</span><br><span class="line">dlopen onEnter: /data/app/~~A55TKEnXig6YeUSXhnkLPg==/com.fenbi.android.leo-O_2O3vNIVRfTPnY4TgeayQ==/lib/arm64/libmsaoaidsec.so</span><br><span class="line">Process terminated</span><br><span class="line">[MEIZU 21 Pro::com.fenbi.android.leo ]-&gt;</span><br><span class="line"></span><br><span class="line">Thank you for using Frida!</span><br></pre></td></tr></table></figure>
+<p>可以看到最终是断在了<strong>libmsaoaidsec.so</strong>，而且并没有走<strong>OnLeave</strong>，说明检测函数就在这个so文件里。并且没有执行<strong>JNI_OnLoad</strong>，说明检测frida的操作是在<strong>.init_proc</strong>或者<strong>.init_array</strong>中完成的</p>
+<h4 id="linker部分代码："><a href="#linker部分代码：" class="headerlink" title="linker部分代码："></a>linker部分代码：</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span>* <span class="title">do_dlopen</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* name, <span class="type">int</span> flags,</span></span></span><br><span class="line"><span class="params"><span class="function">                <span class="type">const</span> android_dlextinfo* extinfo,</span></span></span><br><span class="line"><span class="params"><span class="function">                <span class="type">const</span> <span class="type">void</span>* caller_addr)</span> </span>&#123;</span><br><span class="line">    std::string trace_prefix = std::<span class="built_in">string</span>(<span class="string">&quot;dlopen: &quot;</span>) + (name == <span class="literal">nullptr</span> ? <span class="string">&quot;(nullptr)&quot;</span> : name);</span><br><span class="line">    <span class="function">ScopedTrace <span class="title">trace</span><span class="params">(trace_prefix.c_str())</span></span>;</span><br><span class="line">    <span class="function">ScopedTrace <span class="title">loading_trace</span><span class="params">((trace_prefix + <span class="string">&quot; - loading and linking&quot;</span>).c_str())</span></span>;</span><br><span class="line">    soinfo* <span class="type">const</span> caller = <span class="built_in">find_containing_library</span>(caller_addr);</span><br><span class="line">    <span class="type">android_namespace_t</span>* ns = <span class="built_in">get_caller_namespace</span>(caller);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">LD_LOG</span>(kLogDlopen,</span><br><span class="line">           <span class="string">&quot;dlopen(name=\&quot;%s\&quot;, flags=0x%x, extinfo=%s, caller=\&quot;%s\&quot;, caller_ns=%s@%p) ...&quot;</span>,</span><br><span class="line">           name,</span><br><span class="line">           flags,</span><br><span class="line">           <span class="built_in">android_dlextinfo_to_string</span>(extinfo).<span class="built_in">c_str</span>(),</span><br><span class="line">           caller == <span class="literal">nullptr</span> ? <span class="string">&quot;(null)&quot;</span> : caller-&gt;<span class="built_in">get_realpath</span>(),</span><br><span class="line">           ns == <span class="literal">nullptr</span> ? <span class="string">&quot;(null)&quot;</span> : ns-&gt;<span class="built_in">get_name</span>(),</span><br><span class="line">           ns);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> failure_guard = android::base::<span class="built_in">make_scope_guard</span>(</span><br><span class="line">        [&amp;]() &#123; <span class="built_in">LD_LOG</span>(kLogDlopen, <span class="string">&quot;... dlopen failed: %s&quot;</span>, <span class="built_in">linker_get_error_buffer</span>()); &#125;);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ((flags &amp; ~(RTLD_NOW|RTLD_LAZY|RTLD_LOCAL|RTLD_GLOBAL|RTLD_NODELETE|RTLD_NOLOAD)) != <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">DL_ERR</span>(<span class="string">&quot;invalid flags to dlopen: %x&quot;</span>, flags);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (extinfo != <span class="literal">nullptr</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> ((extinfo-&gt;flags &amp; ~(ANDROID_DLEXT_VALID_FLAG_BITS)) != <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="built_in">DL_ERR</span>(<span class="string">&quot;invalid extended flags to android_dlopen_ext: 0x%&quot;</span> PRIx64, extinfo-&gt;flags);</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> ((extinfo-&gt;flags &amp; ANDROID_DLEXT_USE_LIBRARY_FD) == <span class="number">0</span> &amp;&amp;</span><br><span class="line">            (extinfo-&gt;flags &amp; ANDROID_DLEXT_USE_LIBRARY_FD_OFFSET) != <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="built_in">DL_ERR</span>(<span class="string">&quot;invalid extended flag combination (ANDROID_DLEXT_USE_LIBRARY_FD_OFFSET without &quot;</span></span><br><span class="line">                   <span class="string">&quot;ANDROID_DLEXT_USE_LIBRARY_FD): 0x%&quot;</span> PRIx64, extinfo-&gt;flags);</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> ((extinfo-&gt;flags &amp; ANDROID_DLEXT_LOAD_AT_FIXED_ADDRESS) != <span class="number">0</span> &amp;&amp;</span><br><span class="line">            (extinfo-&gt;flags &amp; (ANDROID_DLEXT_RESERVED_ADDRESS | ANDROID_DLEXT_RESERVED_ADDRESS_HINT)) != <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="built_in">DL_ERR</span>(<span class="string">&quot;invalid extended flag combination: ANDROID_DLEXT_LOAD_AT_FIXED_ADDRESS is not &quot;</span></span><br><span class="line">                   <span class="string">&quot;compatible with ANDROID_DLEXT_RESERVED_ADDRESS/ANDROID_DLEXT_RESERVED_ADDRESS_HINT&quot;</span>);</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> ((extinfo-&gt;flags &amp; ANDROID_DLEXT_USE_NAMESPACE) != <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (extinfo-&gt;library_namespace == <span class="literal">nullptr</span>) &#123;</span><br><span class="line">                <span class="built_in">DL_ERR</span>(<span class="string">&quot;ANDROID_DLEXT_USE_NAMESPACE is set but extinfo-&gt;library_namespace is null&quot;</span>);</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            ns = extinfo-&gt;library_namespace;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    std::string asan_name_holder;</span><br><span class="line"></span><br><span class="line">    <span class="type">const</span> <span class="type">char</span>* translated_name = name;</span><br><span class="line">    <span class="keyword">if</span> (g_is_asan &amp;&amp; translated_name != <span class="literal">nullptr</span> &amp;&amp; translated_name[<span class="number">0</span>] == <span class="string">&#x27;/&#x27;</span>) &#123;</span><br><span class="line">        <span class="type">char</span> original_path[PATH_MAX];</span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">realpath</span>(name, original_path) != <span class="literal">nullptr</span>) &#123;</span><br><span class="line">            asan_name_holder = std::<span class="built_in">string</span>(kAsanLibDirPrefix) + original_path;</span><br><span class="line">            <span class="keyword">if</span> (<span class="built_in">file_exists</span>(asan_name_holder.<span class="built_in">c_str</span>())) &#123;</span><br><span class="line">                soinfo* si = <span class="literal">nullptr</span>;</span><br><span class="line">                <span class="keyword">if</span> (<span class="built_in">find_loaded_library_by_realpath</span>(ns, original_path, <span class="literal">true</span>, &amp;si)) &#123;</span><br><span class="line">                    <span class="built_in">PRINT</span>(<span class="string">&quot;linker_asan dlopen NOT translating \&quot;%s\&quot; -&gt; \&quot;%s\&quot;: library already loaded&quot;</span>, name,</span><br><span class="line">                          asan_name_holder.<span class="built_in">c_str</span>());</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    <span class="built_in">PRINT</span>(<span class="string">&quot;linker_asan dlopen translating \&quot;%s\&quot; -&gt; \&quot;%s\&quot;&quot;</span>, name, translated_name);</span><br><span class="line">                    translated_name = asan_name_holder.<span class="built_in">c_str</span>();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ProtectedDataGuard guard;</span><br><span class="line">    soinfo* si = <span class="built_in">find_library</span>(ns, translated_name, flags, extinfo, caller);</span><br><span class="line">    loading_trace.<span class="built_in">End</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (si != <span class="literal">nullptr</span>) &#123;</span><br><span class="line">        <span class="type">void</span>* handle = si-&gt;<span class="built_in">to_handle</span>();</span><br><span class="line">        <span class="built_in">LD_LOG</span>(kLogDlopen,</span><br><span class="line">               <span class="string">&quot;... dlopen calling constructors: realpath=\&quot;%s\&quot;, soname=\&quot;%s\&quot;, handle=%p&quot;</span>,</span><br><span class="line">               si-&gt;<span class="built_in">get_realpath</span>(), si-&gt;<span class="built_in">get_soname</span>(), handle);</span><br><span class="line">        si-&gt;<span class="built_in">call_constructors</span>();</span><br><span class="line">        failure_guard.<span class="built_in">Disable</span>();</span><br><span class="line">        <span class="built_in">LD_LOG</span>(kLogDlopen,</span><br><span class="line">               <span class="string">&quot;... dlopen successful: realpath=\&quot;%s\&quot;, soname=\&quot;%s\&quot;, handle=%p&quot;</span>,</span><br><span class="line">               si-&gt;<span class="built_in">get_realpath</span>(), si-&gt;<span class="built_in">get_soname</span>(), handle);</span><br><span class="line">        <span class="keyword">return</span> handle;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>直接看重要的部分：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">ProtectedDataGuard guard;</span><br><span class="line">    <span class="comment">//查找并加载so</span></span><br><span class="line">    soinfo* si = <span class="built_in">find_library</span>(ns, translated_name, flags, extinfo, caller);</span><br><span class="line">    loading_trace.<span class="built_in">End</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (si != <span class="literal">nullptr</span>) &#123;</span><br><span class="line">        <span class="type">void</span>* handle = si-&gt;<span class="built_in">to_handle</span>();</span><br><span class="line">        <span class="built_in">LD_LOG</span>(kLogDlopen,</span><br><span class="line">               <span class="string">&quot;... dlopen calling constructors: realpath=\&quot;%s\&quot;, soname=\&quot;%s\&quot;, handle=%p&quot;</span>,</span><br><span class="line">               si-&gt;<span class="built_in">get_realpath</span>(), si-&gt;<span class="built_in">get_soname</span>(), handle);</span><br><span class="line">        si-&gt;<span class="built_in">call_constructors</span>();<span class="comment">//进入之后会调用.init_xxx函数</span></span><br><span class="line">        failure_guard.<span class="built_in">Disable</span>();</span><br><span class="line">        <span class="built_in">LD_LOG</span>(kLogDlopen,</span><br><span class="line">               <span class="string">&quot;... dlopen successful: realpath=\&quot;%s\&quot;, soname=\&quot;%s\&quot;, handle=%p&quot;</span>,</span><br><span class="line">               si-&gt;<span class="built_in">get_realpath</span>(), si-&gt;<span class="built_in">get_soname</span>(), handle);</span><br><span class="line">        <span class="keyword">return</span> handle;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>我们可以看到在<strong>dlopen</strong>函数调用完成之后<strong>.init_xxx</strong>已经执行完成了，所以我们要选择一个适当的时机去hook。这里时机的选择有两种方案：</p>
+<ol>
+<li><p>hook <strong>call_constructors</strong>，并在OnEnter里注入代码</p>
+</li>
+<li><p>在.init_xxx中寻找一个被调用时机较早的外部函数进行hook</p>
+</li>
+</ol>
+<p>这里为了通用一点，选择方案一。但是由于<strong>call_constructors</strong>并不是一个<strong>导出函数</strong>，所以我们在hook的时候需要先得到它相对于linker的偏移地址，这个偏移量不同设备大概是不同的，我们需要自己获取一下</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">readelf -sW /apex/com.android.runtime/bin/linker64 | grep call_constructors</span><br></pre></td></tr></table></figure>
+<p>输出：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">meizu21Pro:/ # readelf -sW /apex/com.android.runtime/bin/linker64 | grep call_constructors</span><br><span class="line">   767: 00000000000623d8   888 FUNC    LOCAL  HIDDEN    11 __dl__ZN6soinfo17call_constructorsEv</span><br></pre></td></tr></table></figure>
+<p>JS代码：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">hook_linker_call_constructors</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">let</span> linker64_base_addr = <span class="title class_">Module</span>.<span class="title function_">getBaseAddress</span>(<span class="string">&#x27;linker64&#x27;</span>)</span><br><span class="line">    <span class="keyword">let</span> offset = <span class="number">0x623d8</span></span><br><span class="line">    <span class="keyword">let</span> call_constructors = linker64_base_addr.<span class="title function_">add</span>(offset)</span><br><span class="line">    <span class="keyword">let</span> listener = <span class="title class_">Interceptor</span>.<span class="title function_">attach</span>(call_constructors,&#123;</span><br><span class="line">        <span class="attr">onEnter</span>:<span class="keyword">function</span>(<span class="params">args</span>)&#123;</span><br><span class="line">            <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;hook_linker_call_constructors onEnter&#x27;</span>)</span><br><span class="line">            <span class="keyword">let</span> secmodule = <span class="title class_">Process</span>.<span class="title function_">findModuleByName</span>(<span class="string">&quot;libmsaoaidsec.so&quot;</span>)</span><br><span class="line">            <span class="keyword">if</span> (secmodule != <span class="literal">null</span>)&#123;</span><br><span class="line">                <span class="comment">//todo</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>确定hook点了之后，接下来定位具体的Frida检测点。对Frida的检测通常会使用openat、open、strstr、pthread_create、snprintf、sprintf、readlinkat等一系列函数。这里选择<strong>pthread_create</strong>函数，因为要检测就首先会创建线程。所以可以先看看那些函数调用了pthread_create</p>
+<h4 id="hook-pthread-create-定位检测点"><a href="#hook-pthread-create-定位检测点" class="headerlink" title="hook pthread_create 定位检测点"></a>hook <code>pthread_create</code> 定位检测点</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">hook_pthred_create</span>(<span class="params"></span>)&#123;</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;libmsaoaidsec.so --- &quot;</span> + <span class="title class_">Process</span>.<span class="title function_">findModuleByName</span>(<span class="string">&quot;libmsaoaidsec.so&quot;</span>).<span class="property">base</span>)</span><br><span class="line">    <span class="title class_">Interceptor</span>.<span class="title function_">attach</span>(<span class="title class_">Module</span>.<span class="title function_">findExportByName</span>(<span class="string">&#x27;libc.so&#x27;</span>,<span class="string">&#x27;pthread_create&#x27;</span>),&#123;</span><br><span class="line">        <span class="title function_">onEnter</span>(<span class="params">args</span>)&#123;</span><br><span class="line">            <span class="keyword">let</span> func_addr = args[<span class="number">2</span>]</span><br><span class="line">            <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">`The thread Called function address is: <span class="subst">$&#123;func_addr&#125;</span>`</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>输出：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br></pre></td><td class="code"><pre><span class="line">PS D:\frida_hook\xiaoyuan&gt; frida -U -l hook.js -f com.fenbi.android.leo</span><br><span class="line">     ____</span><br><span class="line">    / _  |   Frida 16.4.10 - A world-class dynamic instrumentation toolkit</span><br><span class="line">   | (_| |</span><br><span class="line">    &gt; _  |   Commands:</span><br><span class="line">   /_/ |_|       help      -&gt; Displays the help system</span><br><span class="line">   . . . .       object?   -&gt; Display information about &#x27;object&#x27;</span><br><span class="line">   . . . .       exit/quit -&gt; Exit</span><br><span class="line">   . . . .</span><br><span class="line">   . . . .   More info at https://frida.re/docs/home/</span><br><span class="line">   . . . .</span><br><span class="line">   . . . .   Connected to MEIZU 21 Pro (id=481QFGE9227R3)</span><br><span class="line">Spawned `com.fenbi.android.leo`. Resuming main thread!                  </span><br><span class="line">[MEIZU 21 Pro::com.fenbi.android.leo ]-&gt; libmsaoaidsec.so --- 0x7656840000</span><br><span class="line">libmsaoaidsec.so --- 0x7656840000</span><br><span class="line">libmsaoaidsec.so --- 0x7656840000</span><br><span class="line">libmsaoaidsec.so --- 0x7656840000</span><br><span class="line">libmsaoaidsec.so --- 0x7656840000</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">libmsaoaidsec.so --- 0x7656840000</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">libmsaoaidsec.so --- 0x7656840000</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">libmsaoaidsec.so --- 0x7656840000</span><br><span class="line">The thread Called function address is: 0x765685c544</span><br><span class="line">The thread Called function address is: 0x765685c544</span><br><span class="line">The thread Called function address is: 0x765685c544</span><br><span class="line">The thread Called function address is: 0x765685c544</span><br><span class="line">The thread Called function address is: 0x765685c544</span><br><span class="line">The thread Called function address is: 0x765685c544</span><br><span class="line">The thread Called function address is: 0x765685c544</span><br><span class="line">The thread Called function address is: 0x765685c544</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x765685b8d4</span><br><span class="line">The thread Called function address is: 0x765685b8d4</span><br><span class="line">The thread Called function address is: 0x765685b8d4</span><br><span class="line">The thread Called function address is: 0x765685b8d4</span><br><span class="line">The thread Called function address is: 0x765685b8d4</span><br><span class="line">The thread Called function address is: 0x765685b8d4</span><br><span class="line">The thread Called function address is: 0x765685b8d4</span><br><span class="line">The thread Called function address is: 0x765685b8d4</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">libmsaoaidsec.so --- 0x7656840000</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x76e6683c84</span><br><span class="line">The thread Called function address is: 0x7656866e5c</span><br><span class="line">The thread Called function address is: 0x7656866e5c</span><br><span class="line">The thread Called function address is: 0x7656866e5c</span><br><span class="line">The thread Called function address is: 0x7656866e5c</span><br><span class="line">Process terminated</span><br><span class="line">[MEIZU 21 Pro::com.fenbi.android.leo ]-&gt;</span><br><span class="line"></span><br><span class="line">Thank you for using Frida!</span><br></pre></td></tr></table></figure>
+<p>可以看到libmsaoaidsec.so在内存中的地址是 —- 0x7656840000</p>
+<p>分析日志可知有三个线程是由libmsaoaidsec.so创建的，他们相对so的偏移地址分别是：<br><strong>0x765685c544 - 0x7656840000 = 0x1c544</strong></p>
+<p><strong>0x765685b8d4 - 0x7656840000 = 0x1b8d4</strong></p>
+<p><strong>0x7656866e5c - 0x7656840000 = 0x26e5c</strong></p>
+<p>知道了偏移地址，我们就可以使用IDA打开so开始分析了</p>
+<p>按下<strong>G</strong>跳转到上述地址，我们可以一个个尝试，比如我们先打开<strong>0x1b8d4</strong>处的函数</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line">LOAD:000000000001B8D4                               ; void __noreturn sub_1B8D4()</span><br><span class="line">LOAD:000000000001B8D4                               sub_1B8D4                               ; DATA XREF: sub_1B924+520↓o</span><br><span class="line">LOAD:000000000001B8D4                                                                       ; sub_1B924+52C↓o</span><br><span class="line">LOAD:000000000001B8D4</span><br><span class="line">LOAD:000000000001B8D4                               var_10= -0x10</span><br><span class="line">LOAD:000000000001B8D4</span><br><span class="line">LOAD:000000000001B8D4 F3 7B BF A9                   STP             X19, X30, [SP,#var_10]!</span><br><span class="line">LOAD:000000000001B8D8 94 C4 FF 97                   BL              sub_CB28</span><br><span class="line">LOAD:000000000001B8D8</span><br><span class="line">LOAD:000000000001B8DC 08 90 90 52                   MOV             W8, #0x8480</span><br><span class="line">LOAD:000000000001B8E0 1F 90 01 71                   CMP             W0, #0x64 ; &#x27;d&#x27;</span><br><span class="line">LOAD:000000000001B8E4 C8 03 A0 72                   MOVK            W8, #0x1E,LSL#16</span><br><span class="line">LOAD:000000000001B8E8 13 31 80 1A                   CSEL            W19, W8, W0, CC</span><br><span class="line">LOAD:000000000001B8EC 03 00 00 14                   B               loc_1B8F8</span><br><span class="line">LOAD:000000000001B8EC</span><br><span class="line">LOAD:000000000001B8F0                               ; ---------------------------------------------------------------------------</span><br><span class="line">LOAD:000000000001B8F0</span><br><span class="line">LOAD:000000000001B8F0                               loc_1B8F0                               ; CODE XREF: sub_1B8D4+44↓j</span><br><span class="line">LOAD:000000000001B8F0                                                                       ; sub_1B8D4+4C↓j</span><br><span class="line">LOAD:000000000001B8F0 E0 03 13 2A                   MOV             W0, W19                 ; useconds</span><br><span class="line">LOAD:000000000001B8F4 F3 AF FF 97                   BL              usleep</span><br><span class="line">LOAD:000000000001B8F4</span><br><span class="line">LOAD:000000000001B8F8</span><br><span class="line">LOAD:000000000001B8F8                               loc_1B8F8                               ; CODE XREF: sub_1B8D4+18↑j</span><br><span class="line">LOAD:000000000001B8F8 54 FD FF 97                   BL              sub_1AE48</span><br><span class="line">LOAD:000000000001B8F8</span><br><span class="line">LOAD:000000000001B8FC 1F 04 00 31                   CMN             W0, #1</span><br><span class="line">LOAD:000000000001B900 E0 00 00 54                   B.EQ            loc_1B91C</span><br><span class="line">LOAD:000000000001B900</span><br><span class="line">LOAD:000000000001B904 60 00 00 34                   CBZ             W0, loc_1B910</span><br><span class="line">LOAD:000000000001B904</span><br><span class="line">LOAD:000000000001B908 93 FC FF 97                   BL              sub_1AB54</span><br><span class="line">LOAD:000000000001B908</span><br><span class="line">LOAD:000000000001B90C 80 00 00 36                   TBZ             W0, #0, loc_1B91C</span><br><span class="line">LOAD:000000000001B90C</span><br><span class="line">LOAD:000000000001B910</span><br><span class="line">LOAD:000000000001B910                               loc_1B910                               ; CODE XREF: sub_1B8D4+30↑j</span><br><span class="line">LOAD:000000000001B910 88 FF FF 97                   BL              sub_1B730</span><br><span class="line">LOAD:000000000001B910</span><br><span class="line">LOAD:000000000001B914 1F 24 0C 71                   CMP             W0, #0x309</span><br><span class="line">LOAD:000000000001B918 C1 FE FF 54                   B.NE            loc_1B8F0</span><br><span class="line">LOAD:000000000001B918</span><br><span class="line">LOAD:000000000001B91C</span><br><span class="line">LOAD:000000000001B91C                               loc_1B91C                               ; CODE XREF: sub_1B8D4+2C↑j</span><br><span class="line">LOAD:000000000001B91C                                                                       ; sub_1B8D4+38↑j</span><br><span class="line">LOAD:000000000001B91C A2 D9 FF 97                   BL              sub_11FA4</span><br><span class="line">LOAD:000000000001B91C</span><br><span class="line">LOAD:000000000001B920 F4 FF FF 17                   B               loc_1B8F0</span><br><span class="line">LOAD:000000000001B920</span><br><span class="line">LOAD:000000000001B920                               ; End of function sub_1B8D4</span><br></pre></td></tr></table></figure>
+<p>根据交叉引用确定了它在<strong>sub_1B924</strong>函数中被调用，那么这个函数应该就是frida检测逻辑所在的函数了，我们有两种方式过掉这个检测</p>
+<ol>
+<li><p>直接nop掉<strong>pthread_create</strong></p>
+</li>
+<li><p>直接replace <strong>sub_1B924</strong></p>
+</li>
+</ol>
+<p>都很简单，这里选择第二种方式</p>
+<p>JS代码：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> isHooked = <span class="literal">false</span>;</span><br><span class="line"><span class="keyword">function</span> <span class="title function_">hook_sub_1b924</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (isHooked) &#123;</span><br><span class="line">        <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;Function already hooked, skipping...&#x27;</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> secmodule = <span class="title class_">Process</span>.<span class="title function_">findModuleByName</span>(<span class="string">&quot;libmsaoaidsec.so&quot;</span>);</span><br><span class="line">    <span class="title class_">Interceptor</span>.<span class="title function_">replace</span>(secmodule.<span class="property">base</span>.<span class="title function_">add</span>(<span class="number">0x1B924</span>), <span class="keyword">new</span> <span class="title class_">NativeCallback</span>(<span class="keyword">function</span> (<span class="params"></span>) &#123;</span><br><span class="line">        <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">`hook_sub_1b924 &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; replace`</span>);</span><br><span class="line">    &#125;, <span class="string">&#x27;void&#x27;</span>, []));</span><br><span class="line"></span><br><span class="line">    isHooked = <span class="literal">true</span>; <span class="comment">// Mark as hooked</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="0x03：全部代码"><a href="#0x03：全部代码" class="headerlink" title="0x03：全部代码"></a>0x03：全部代码</h2><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">hook_dlopen</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="title class_">Interceptor</span>.<span class="title function_">attach</span>(<span class="title class_">Module</span>.<span class="title function_">findExportByName</span>(<span class="literal">null</span>, <span class="string">&quot;android_dlopen_ext&quot;</span>),</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">onEnter</span>: <span class="keyword">function</span> (<span class="params">args</span>) &#123;</span><br><span class="line">                <span class="variable language_">this</span>.<span class="property">fileName</span> = args[<span class="number">0</span>].<span class="title function_">readCString</span>()</span><br><span class="line">                <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">`dlopen onEnter: <span class="subst">$&#123;<span class="variable language_">this</span>.fileName&#125;</span>`</span>)</span><br><span class="line">            &#125;, <span class="attr">onLeave</span>: <span class="keyword">function</span>(<span class="params">retval</span>)&#123;</span><br><span class="line">                <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">`dlopen onLeave fileName: <span class="subst">$&#123;<span class="variable language_">this</span>.fileName&#125;</span>`</span>)</span><br><span class="line">                <span class="keyword">if</span>(<span class="variable language_">this</span>.<span class="property">fileName</span> != <span class="literal">null</span> &amp;&amp; <span class="variable language_">this</span>.<span class="property">fileName</span>.<span class="title function_">indexOf</span>(<span class="string">&quot;libmsaoaidsec.so&quot;</span>) &gt;= <span class="number">0</span>)&#123;</span><br><span class="line">                    <span class="keyword">let</span> JNI_OnLoad = <span class="title class_">Module</span>.<span class="title function_">getExportByName</span>(<span class="variable language_">this</span>.<span class="property">fileName</span>, <span class="string">&#x27;JNI_OnLoad&#x27;</span>)</span><br><span class="line">                    <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">`dlopen onLeave JNI_OnLoad: <span class="subst">$&#123;JNI_OnLoad&#125;</span>`</span>)</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    );</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">hook_linker_call_constructors</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">let</span> linker64_base_addr = <span class="title class_">Module</span>.<span class="title function_">getBaseAddress</span>(<span class="string">&#x27;linker64&#x27;</span>)</span><br><span class="line">    <span class="keyword">let</span> offset = <span class="number">0x623d8</span></span><br><span class="line">    <span class="keyword">let</span> call_constructors = linker64_base_addr.<span class="title function_">add</span>(offset)</span><br><span class="line">    <span class="keyword">let</span> listener = <span class="title class_">Interceptor</span>.<span class="title function_">attach</span>(call_constructors,&#123;</span><br><span class="line">        <span class="attr">onEnter</span>:<span class="keyword">function</span>(<span class="params">args</span>)&#123;</span><br><span class="line">            <span class="comment">//console.log(&#x27;hook_linker_call_constructors onEnter&#x27;)</span></span><br><span class="line">            <span class="keyword">let</span> secmodule = <span class="title class_">Process</span>.<span class="title function_">findModuleByName</span>(<span class="string">&quot;libmsaoaidsec.so&quot;</span>)</span><br><span class="line">            <span class="keyword">if</span> (secmodule != <span class="literal">null</span>)&#123;</span><br><span class="line">                <span class="comment">// do something</span></span><br><span class="line">                <span class="comment">//hook_pthred_create()</span></span><br><span class="line">                <span class="title function_">hook_sub_1b924</span>()</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">hook_pthred_create</span>(<span class="params"></span>)&#123;</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;libmsaoaidsec.so --- &quot;</span> + <span class="title class_">Process</span>.<span class="title function_">findModuleByName</span>(<span class="string">&quot;libmsaoaidsec.so&quot;</span>).<span class="property">base</span>)</span><br><span class="line">    <span class="title class_">Interceptor</span>.<span class="title function_">attach</span>(<span class="title class_">Module</span>.<span class="title function_">findExportByName</span>(<span class="string">&#x27;libc.so&#x27;</span>,<span class="string">&#x27;pthread_create&#x27;</span>),&#123;</span><br><span class="line">        <span class="title function_">onEnter</span>(<span class="params">args</span>)&#123;</span><br><span class="line">            <span class="keyword">let</span> func_addr = args[<span class="number">2</span>]</span><br><span class="line">            <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">`The thread Called function address is: <span class="subst">$&#123;func_addr&#125;</span>`</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> isHooked = <span class="literal">false</span>;</span><br><span class="line"><span class="keyword">function</span> <span class="title function_">hook_sub_1b924</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (isHooked) &#123;</span><br><span class="line">        <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;Function already hooked, skipping...&#x27;</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> secmodule = <span class="title class_">Process</span>.<span class="title function_">findModuleByName</span>(<span class="string">&quot;libmsaoaidsec.so&quot;</span>);</span><br><span class="line">    <span class="title class_">Interceptor</span>.<span class="title function_">replace</span>(secmodule.<span class="property">base</span>.<span class="title function_">add</span>(<span class="number">0x1B924</span>), <span class="keyword">new</span> <span class="title class_">NativeCallback</span>(<span class="keyword">function</span> (<span class="params"></span>) &#123;</span><br><span class="line">        <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">`hook_sub_1b924 &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; replace`</span>);</span><br><span class="line">    &#125;, <span class="string">&#x27;void&#x27;</span>, []));</span><br><span class="line"></span><br><span class="line">    isHooked = <span class="literal">true</span>; <span class="comment">// Mark as hooked</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="title function_">setImmediate</span>(hook_linker_call_constructors)</span><br><span class="line"></span><br><span class="line"><span class="comment">//frida -U -l hook.js -f com.fenbi.android.leo</span></span><br></pre></td></tr></table></figure>
+<h2 id="0x04：总结-amp-简单过掉libmsaoaidsec-so的方法"><a href="#0x04：总结-amp-简单过掉libmsaoaidsec-so的方法" class="headerlink" title="0x04：总结&amp;简单过掉libmsaoaidsec.so的方法"></a>0x04：总结&amp;简单过掉libmsaoaidsec.so的方法</h2><h4 id="总结："><a href="#总结：" class="headerlink" title="总结："></a>总结：</h4><p>这里直接去查看<strong>0x1b8d4</strong>是因为我知道它是有问题的函数，正常分析需要三处都去分析一下，当然可以直接尝试nop掉，这样可以节省许多时间，毕竟分析也是很累人的。这只是个过frida检测的例子，实际上有更简单的方法，我只是觉得这种方法比较通用。</p>
+<h4 id="简单过掉libmsaoaidsec-so的方法："><a href="#简单过掉libmsaoaidsec-so的方法：" class="headerlink" title="简单过掉libmsaoaidsec.so的方法："></a>简单过掉libmsaoaidsec.so的方法：</h4><p>可以直接删去/data/app/~~A55TKEnXig6YeUSXhnkLPg==/com.fenbi.android.leo-O_2O3vNIVRfTPnY4TgeayQ==/lib/arm64/libmsaoaidsec.so或者直接在apk包中把这个so删掉。因为这个so纯纯是一个安全相关的so，与app本身的业务逻辑毫无关系，直接删掉就好了(与linker的实现也有关，之前写过一篇详细介绍)。bilibili，爱奇艺之类的很多软件都有这个so</p>
+<p>也可以在frida中简易的过掉（本段代码来自看雪论坛）：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">hook_dlopen</span>(<span class="params">soName = <span class="string">&#x27;&#x27;</span></span>) &#123;</span><br><span class="line">    <span class="title class_">Interceptor</span>.<span class="title function_">attach</span>(<span class="title class_">Module</span>.<span class="title function_">findExportByName</span>(<span class="literal">null</span>, <span class="string">&quot;android_dlopen_ext&quot;</span>), &#123;</span><br><span class="line">        <span class="attr">onEnter</span>: <span class="keyword">function</span> (<span class="params">args</span>) &#123;</span><br><span class="line">            <span class="keyword">var</span> pathptr = args[<span class="number">0</span>];</span><br><span class="line">            <span class="keyword">if</span> (pathptr !== <span class="literal">undefined</span> &amp;&amp; pathptr != <span class="literal">null</span>) &#123;</span><br><span class="line">                <span class="keyword">var</span> path = <span class="title function_">ptr</span>(pathptr).<span class="title function_">readCString</span>();</span><br><span class="line">                <span class="keyword">if</span>(path.<span class="title function_">indexOf</span>(<span class="string">&#x27;libmsaoaidsec.so&#x27;</span>) &gt;= <span class="number">0</span>)&#123;</span><br><span class="line">                    <span class="title function_">ptr</span>(pathptr).<span class="title function_">writeUtf8String</span>(<span class="string">&quot;&quot;</span>);</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;path: &#x27;</span>,path)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br><span class="line"><span class="title function_">hook_dlopen</span>()</span><br></pre></td></tr></table></figure>
+
+        
+      </div>
+
+         
+    </div>
+    
+     
+  </div>
+  
+    
+<nav id="article-nav">
+  <a class="article-nav-btn left "
+    
+      href="/2024/12/26/ELFLoador/"
+      title="ElfLoader的实现及原理"
+     >
+    <i class="fa-solid fa-angle-left"></i>
+    <p class="title-text">
+      
+        ElfLoader的实现及原理
+        
+    </p>
+  </a>
+  <a class="article-nav-btn right "
+    
+      href="/2024/12/25/HelloBlog/"
+      title="NEW BLOG!!"
+     >
+
+    <p class="title-text">
+      
+        NEW BLOG!!
+        
+    </p>
+    <i class="fa-solid fa-angle-right"></i>
+  </a>
+</nav>
+
+
+  
+</article>
+
+
+
+
+
+    </div>
+    <div id="footer-wrapper">
+      <footer id="footer" style="text-align: center;">
+  <div id="footer-info" class="inner">
+    <p>到底了</p>
+    <p>
+      &copy; 2024 Yuuki
+    </p>
+  </div>
+</footer>
+    </div>
+    <div class="back-to-top-wrapper">
+    <button id="back-to-top-btn" class="back-to-top-btn hide" onclick="topFunction()">
+        <i class="fa-solid fa-angle-up"></i>
+    </button>
+</div>
+
+<script>
+    function topFunction() {
+        window.scroll({ top: 0, behavior: 'smooth' });
+    }
+    let btn = document.getElementById('back-to-top-btn');
+    function scrollFunction() {
+        if (document.body.scrollTop > 600 || document.documentElement.scrollTop > 600) {
+            btn.classList.remove('hide')
+        } else {
+            btn.classList.add('hide')
+        }
+    }
+    window.onscroll = function() {
+        scrollFunction();
+    }
+</script>
+
+  </div>
+  <script src="/js/light-dark-switch.js"></script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+</body>
+</html>

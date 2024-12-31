@@ -146,7 +146,7 @@
       <div class="category-box">
             <a class="category-link" href="/categories/Android/">
                 Android
-                <div class="category-count">1</div>
+                <div class="category-count">2</div>
             </a>
         
             <a class="category-link" href="/categories/Life/">
@@ -163,7 +163,7 @@
   <div class="widget-wrap">
     <div class="widget">
       <h3 class="widget-title">Tags</h3>
-      <ul class="widget-tag-list" itemprop="keywords"><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/elf/" rel="tag">elf</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/idea/" rel="tag">idea</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/linker/" rel="tag">linker</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/photo/" rel="tag">photo</a></li></ul>
+      <ul class="widget-tag-list" itemprop="keywords"><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/elf/" rel="tag">elf</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/env-check/" rel="tag">env_check</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/frida/" rel="tag">frida</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/idea/" rel="tag">idea</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/linker/" rel="tag">linker</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/photo/" rel="tag">photo</a></li></ul>
     </div>
   </div>
 
@@ -177,7 +177,7 @@
       
         <a class="archive-link" href="/archives/2024/12 ">
           December 2024 
-          <div class="archive-count">2 </div>
+          <div class="archive-count">3 </div>
         </a>
       
     </div>
@@ -194,6 +194,12 @@
           <a class="recent-link" href="/2024/12/26/ELFLoador/" title="ElfLoader的实现及原理" >
             <div class="recent-link-text">
               ElfLoader的实现及原理
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2024/12/25/PassFridacheck/" title="过Frida检测的一般思路" >
+            <div class="recent-link-text">
+              过Frida检测的一般思路
             </div>
           </a>
         
@@ -308,13 +314,13 @@
   </a>
   <a class="article-nav-btn right "
     
-      href="/2024/12/25/HelloBlog/"
-      title="NEW BLOG!!"
+      href="/2024/12/25/PassFridacheck/"
+      title="过Frida检测的一般思路"
      >
 
     <p class="title-text">
       
-        NEW BLOG!!
+        过Frida检测的一般思路
         
     </p>
     <i class="fa-solid fa-angle-right"></i>
@@ -365,5 +371,20 @@
 
   </div>
   <script src="/js/light-dark-switch.js"></script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
 </body>
 </html>

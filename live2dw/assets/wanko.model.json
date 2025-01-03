@@ -1,0 +1,28 @@
+{
+	"version":"Sample 1.0.0",
+	"model":"moc/wanko.moc",
+	"textures":[
+		"moc/wanko.1024/texture_00.png"
+	],
+	"motions":{
+		"":[
+			{"file":"mtn/broken_1.mtn"},
+			{"file":"mtn/broken_2.mtn"},
+			{"file":"mtn/broken_3.mtn"},
+			{"file":"mtn/broken_4.mtn"},
+			{"file":"mtn/broken_5.mtn"},
+			{"file":"mtn/login.mtn"},
+			{"file":"mtn/shake.mtn"},
+			{"file":"mtn/wait_1.mtn"}
+		],
+		"idle":[
+			{"file":"mtn/daiji.mtn"}
+		]	
+	},
+	"physics":"physics.json",
+	"hit_areas":[
+			{"name":"head","id":"D_REF.HEAD"},
+			{"name":"leg","id":"D_REF.LEG"},
+			{"name":"body","id":"D_REF.BODY"}
+			]
+}

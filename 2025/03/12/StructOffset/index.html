@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+
+
+<html theme="dark" showBanner="true" hasBanner="true" > 
+<link href="https://cdn.staticfile.org/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet">
+<link href="https://cdn.staticfile.org/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet">
+<link href="https://cdn.staticfile.org/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet">
+<script src="/js/color.global.min.js" ></script>
+<script src="/js/load-settings.js" ></script>
+<head>
+  <meta charset="utf-8">
+  
+  
+  
+
+  
+  <title>内核中结构体偏移计算 | Yuuki</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <link rel="preload" href="/css/fonts/Roboto-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+  <link rel="preload" href="/css/fonts/Roboto-Bold.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+
+  <meta name="description" content="结构体缺失的解决办法1.直接去复制对应内核版本的对应结构体导入这个方法直接一点，但是不同内核的结构体有时候不太一样，而且得一直复制粘贴，还会遇到嵌套结构体的问题，太jb麻烦了，所以除非结构体比较简单，这种方式会好用一些。而且导入时只需要导入到我们最后用到的那个成员就好了。比如： 123456789101112131415161718192021222324252627282930313233343">
+<meta property="og:type" content="article">
+<meta property="og:title" content="内核中结构体偏移计算">
+<meta property="og:url" content="http://example.com/2025/03/12/StructOffset/index.html">
+<meta property="og:site_name" content="Yuuki">
+<meta property="og:description" content="结构体缺失的解决办法1.直接去复制对应内核版本的对应结构体导入这个方法直接一点，但是不同内核的结构体有时候不太一样，而且得一直复制粘贴，还会遇到嵌套结构体的问题，太jb麻烦了，所以除非结构体比较简单，这种方式会好用一些。而且导入时只需要导入到我们最后用到的那个成员就好了。比如： 123456789101112131415161718192021222324252627282930313233343">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2025-03-12T08:19:10.000Z">
+<meta property="article:modified_time" content="2025-03-12T08:20:00.689Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="kernel">
+<meta name="twitter:card" content="summary">
+  
+  
+    <link rel="shortcut icon" href="/site_img/icon.jpg">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+  
+  
+    
+<div id="banner" class="">
+  <img src="/site_img/backg.png" itemprop="image">
+  <div id="banner-dim"></div>
+</div>
+ 
+   
+  <div id="main-grid" class="  ">
+    <div id="nav" class=""  >
+      <navbar id="navbar">
+  <nav id="title-nav">
+    <a href="/">
+      <div id="vivia-logo">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+      <div>Yuuki </div>
+    </a>
+  </nav>
+  <nav id="main-nav">
+    
+      <a class="main-nav-link" href="/">Home</a>
+    
+      <a class="main-nav-link" href="/archives">Archives</a>
+    
+      <a class="main-nav-link" href="/about">About</a>
+    
+  </nav>
+  <nav id="sub-nav">
+    <a id="theme-btn" class="nav-icon">
+      <span class="light-mode-icon"><svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M438.5-829.913v-48q0-17.452 11.963-29.476 11.964-12.024 29.326-12.024 17.363 0 29.537 12.024t12.174 29.476v48q0 17.452-11.963 29.476-11.964 12.024-29.326 12.024-17.363 0-29.537-12.024T438.5-829.913Zm0 747.826v-48q0-17.452 11.963-29.476 11.964-12.024 29.326-12.024 17.363 0 29.537 12.024t12.174 29.476v48q0 17.452-11.963 29.476-11.964 12.024-29.326 12.024-17.363 0-29.537-12.024T438.5-82.087ZM877.913-438.5h-48q-17.452 0-29.476-11.963-12.024-11.964-12.024-29.326 0-17.363 12.024-29.537t29.476-12.174h48q17.452 0 29.476 11.963 12.024 11.964 12.024 29.326 0 17.363-12.024 29.537T877.913-438.5Zm-747.826 0h-48q-17.452 0-29.476-11.963-12.024-11.964-12.024-29.326 0-17.363 12.024-29.537T82.087-521.5h48q17.452 0 29.476 11.963 12.024 11.964 12.024 29.326 0 17.363-12.024 29.537T130.087-438.5Zm660.174-290.87-34.239 32q-12.913 12.674-29.565 12.174-16.653-.5-29.327-13.174-12.674-12.673-12.554-28.826.12-16.152 12.794-28.826l33-35q12.913-12.674 30.454-12.674t30.163 12.847q12.709 12.846 12.328 30.826-.38 17.98-13.054 30.653ZM262.63-203.978l-32 34q-12.913 12.674-30.454 12.674t-30.163-12.847q-12.709-12.846-12.328-30.826.38-17.98 13.054-30.653l33.239-31q12.913-12.674 29.565-12.174 16.653.5 29.327 13.174 12.674 12.673 12.554 28.826-.12 16.152-12.794 28.826Zm466.74 33.239-32-33.239q-12.674-12.913-12.174-29.565.5-16.653 13.174-29.327 12.673-12.674 28.826-13.054 16.152-.38 28.826 12.294l35 33q12.674 12.913 12.674 30.454t-12.847 30.163q-12.846 12.709-30.826 12.328-17.98-.38-30.653-13.054ZM203.978-697.37l-34-33q-12.674-12.913-13.174-29.945-.5-17.033 12.174-29.707t31.326-13.293q18.653-.62 31.326 13.054l32 34.239q11.674 12.913 11.174 29.565-.5 16.653-13.174 29.327-12.673 12.674-28.826 12.554-16.152-.12-28.826-12.794ZM480-240q-100 0-170-70t-70-170q0-100 70-170t170-70q100 0 170 70t70 170q0 100-70 170t-170 70Zm-.247-82q65.703 0 111.475-46.272Q637-414.544 637-480.247t-45.525-111.228Q545.95-637 480.247-637t-111.475 45.525Q323-545.95 323-480.247t45.525 111.975Q414.05-322 479.753-322ZM481-481Z"/></svg></span>
+      <span class="dark-mode-icon"><svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M480.239-116.413q-152.63 0-258.228-105.478Q116.413-327.37 116.413-480q0-130.935 77.739-227.435t206.304-125.043q43.022-9.631 63.87 10.869t3.478 62.805q-8.891 22.043-14.315 44.463-5.424 22.42-5.424 46.689 0 91.694 64.326 155.879 64.325 64.186 156.218 64.186 24.369 0 46.978-4.946 22.609-4.945 44.413-14.076 42.826-17.369 62.967 1.142 20.142 18.511 10.511 61.054Q807.174-280 712.63-198.206q-94.543 81.793-232.391 81.793Zm0-95q79.783 0 143.337-40.217 63.554-40.218 95.793-108.283-15.608 4.044-31.097 5.326-15.49 1.283-31.859.805-123.706-4.066-210.777-90.539-87.071-86.473-91.614-212.092-.24-16.369.923-31.978 1.164-15.609 5.446-30.978-67.826 32.478-108.282 96.152Q211.652-559.543 211.652-480q0 111.929 78.329 190.258 78.329 78.329 190.258 78.329ZM466.13-465.891Z"/></svg></span>
+    </a>
+    
+    <div id="nav-menu-btn" class="nav-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M177.37-252.282q-17.453 0-29.477-11.964-12.024-11.963-12.024-29.326t12.024-29.537q12.024-12.174 29.477-12.174h605.26q17.453 0 29.477 11.964 12.024 11.963 12.024 29.326t-12.024 29.537q-12.024 12.174-29.477 12.174H177.37Zm0-186.218q-17.453 0-29.477-11.963-12.024-11.964-12.024-29.326 0-17.363 12.024-29.537T177.37-521.5h605.26q17.453 0 29.477 11.963 12.024 11.964 12.024 29.326 0 17.363-12.024 29.537T782.63-438.5H177.37Zm0-186.217q-17.453 0-29.477-11.964-12.024-11.963-12.024-29.326t12.024-29.537q12.024-12.174 29.477-12.174h605.26q17.453 0 29.477 11.964 12.024 11.963 12.024 29.326t-12.024 29.537q-12.024 12.174-29.477 12.174H177.37Z"/></svg>
+    </div>
+  </nav>
+</navbar>
+<div id="nav-dropdown" class="hidden">
+  <div id="dropdown-link-list">
+    
+      <a class="nav-dropdown-link" href="/">Home</a>
+    
+      <a class="nav-dropdown-link" href="/archives">Archives</a>
+    
+      <a class="nav-dropdown-link" href="/about">About</a>
+    
+     
+    </div>
+</div>
+<script>
+  let dropdownBtn = document.getElementById("nav-menu-btn");
+  let dropdownEle = document.getElementById("nav-dropdown");
+  dropdownBtn.onclick = function() {
+    dropdownEle.classList.toggle("hidden");
+  }
+</script>
+    </div>
+    <div id="sidebar-wrapper">
+      <sidebar id="sidebar">
+  
+    <div class="widget-wrap">
+  <div class="info-card">
+    <div class="avatar">
+      
+        <image src=/site_img/icon.jpg></image>
+      
+      <div class="img-dim"></div>
+    </div>
+    <div class="info">
+      <div class="username">Yuuki </div>
+      <div class="dot"></div>
+      <div class="subtitle">不说话 装高手 </div>
+      <div class="link-list">
+        
+          <a class="link-btn" target="_blank" rel="noopener" href="https://x.com/LiYangv?t=kbZV9-LGilEE-2pg_2GBeQ&s=09" title="Twitter"><i class="fa-brands fa-twitter"></i></a>
+        
+          <a class="link-btn" target="_blank" rel="noopener" href="https://steamcommunity.com/profiles/76561199358468625/" title="Steam"><i class="fa-brands fa-steam"></i></a>
+        
+          <a class="link-btn" target="_blank" rel="noopener" href="https://github.com/SoyBeanMilkx" title="GitHub"><i class="fa-brands fa-github"></i></a>
+         
+      </div>  
+    </div>
+  </div>
+</div>
+
+  
+  <div class="sticky">
+    
+      
+
+
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Categories</h3>
+      <div class="category-box">
+            <a class="category-link" href="/categories/Life/">
+                Life
+                <div class="category-count">1</div>
+            </a>
+        
+            <a class="category-link" href="/categories/Android/">
+                Android
+                <div class="category-count">4</div>
+            </a>
+        
+            <a class="category-link" href="/categories/NeuralNetwork/">
+                NeuralNetwork
+                <div class="category-count">1</div>
+            </a>
+        </div>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Tags</h3>
+      <ul class="widget-tag-list" itemprop="keywords"><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/CV/" rel="tag">CV</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/MPL/" rel="tag">MPL</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/elf/" rel="tag">elf</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/env-check/" rel="tag">env_check</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/frida/" rel="tag">frida</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/idea/" rel="tag">idea</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/kernel/" rel="tag">kernel</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/linker/" rel="tag">linker</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/native-camera/" rel="tag">native camera</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/photo/" rel="tag">photo</a></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Archives</h3>
+      
+      
+        <a class="archive-link" href="/archives/2025/03 ">
+          March 2025 
+          <div class="archive-count">1 </div>
+        </a>
+      
+        <a class="archive-link" href="/archives/2024/12 ">
+          December 2024 
+          <div class="archive-count">5 </div>
+        </a>
+      
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Recent Posts</h3>
+      <ul>
+        
+          <a class="recent-link" href="/2025/03/12/StructOffset/" title="内核中结构体偏移计算" >
+            <div class="recent-link-text">
+              内核中结构体偏移计算
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2024/12/26/ELFLoador/" title="ElfLoader的实现及原理" >
+            <div class="recent-link-text">
+              ElfLoader的实现及原理
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2024/12/25/PassFridacheck/" title="过Frida检测的一般思路" >
+            <div class="recent-link-text">
+              过Frida检测的一般思路
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2024/12/25/NeuralNetwork/" title="简述神经网络" >
+            <div class="recent-link-text">
+              简述神经网络
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2024/12/25/MobileMonitor/" title="旧手机改监控" >
+            <div class="recent-link-text">
+              旧手机改监控
+            </div>
+          </a>
+        
+      </ul>
+    </div>
+  </div>
+
+    
+  </div>
+</sidebar>
+    </div>
+    <div id="content-body">
+       
+
+
+<article id="post-StructOffset" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  
+    
+   
+  <div class="article-inner">
+    <div class="article-main">
+      <header class="article-header">
+        
+<div class="main-title-bar">
+  <div class="main-title-dot"></div>
+  
+    
+      <h1 class="p-name article-title" itemprop="headline name">
+        内核中结构体偏移计算
+      </h1>
+    
+  
+</div>
+
+        <div class='meta-info-bar'>
+          <div class="meta-info">
+  <time class="dt-published" datetime="2025-03-12T08:19:10.000Z" itemprop="datePublished">2025-03-12</time>
+</div>
+          <div class="need-seperator meta-info">
+            <div class="meta-cate-flex">
+  
+  <a class="meta-cate-link" href="/categories/Android/">Android</a>
+   
+</div>
+  
+          </div>
+          <div class="wordcount need-seperator meta-info">
+            6.6k words 
+          </div>
+        </div>
+        
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/kernel/" rel="tag">kernel</a></li></ul>
+
+      </header>
+      <div class="e-content article-entry" itemprop="articleBody">
+        
+          <h1 id="结构体缺失的解决办法"><a href="#结构体缺失的解决办法" class="headerlink" title="结构体缺失的解决办法"></a>结构体缺失的解决办法</h1><h2 id="1-直接去复制对应内核版本的对应结构体导入"><a href="#1-直接去复制对应内核版本的对应结构体导入" class="headerlink" title="1.直接去复制对应内核版本的对应结构体导入"></a>1.直接去复制对应内核版本的对应结构体导入</h2><p>这个方法直接一点，但是不同内核的结构体有时候不太一样，而且得一直复制粘贴，还会遇到嵌套结构体的问题，太jb麻烦了，所以除非结构体比较简单，这种方式会好用一些。而且导入时只需要导入到我们最后用到的那个成员就好了。比如：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">file_operations</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">module</span> *<span class="title">owner</span>;</span></span><br><span class="line">    <span class="type">loff_t</span> (*llseek) (<span class="keyword">struct</span> file *, <span class="type">loff_t</span>, <span class="type">int</span>);</span><br><span class="line">    <span class="type">ssize_t</span> (*read) (<span class="keyword">struct</span> file *, <span class="type">char</span> __user *, <span class="type">size_t</span>, <span class="type">loff_t</span> *);</span><br><span class="line">    <span class="type">ssize_t</span> (*write) (<span class="keyword">struct</span> file *, <span class="type">const</span> <span class="type">char</span> __user *, <span class="type">size_t</span>, <span class="type">loff_t</span> *);</span><br><span class="line">    <span class="type">ssize_t</span> (*read_iter) (<span class="keyword">struct</span> kiocb *, <span class="keyword">struct</span> iov_iter *);</span><br><span class="line">    <span class="type">ssize_t</span> (*write_iter) (<span class="keyword">struct</span> kiocb *, <span class="keyword">struct</span> iov_iter *);</span><br><span class="line">    <span class="type">int</span> (*iopoll)(<span class="keyword">struct</span> kiocb *kiocb, <span class="keyword">struct</span> io_comp_batch *,</span><br><span class="line">                  <span class="type">unsigned</span> <span class="type">int</span> flags);</span><br><span class="line">    <span class="type">int</span> (*iterate) (<span class="keyword">struct</span> file *, <span class="keyword">struct</span> dir_context *);</span><br><span class="line">    <span class="type">int</span> (*iterate_shared) (<span class="keyword">struct</span> file *, <span class="keyword">struct</span> dir_context *);</span><br><span class="line">    <span class="type">__poll_t</span> (*poll) (<span class="keyword">struct</span> file *, <span class="keyword">struct</span> poll_table_struct *);</span><br><span class="line">    <span class="type">long</span> (*unlocked_ioctl) (<span class="keyword">struct</span> file *, <span class="type">unsigned</span> <span class="type">int</span>, <span class="type">unsigned</span> <span class="type">long</span>);</span><br><span class="line">    <span class="type">long</span> (*compat_ioctl) (<span class="keyword">struct</span> file *, <span class="type">unsigned</span> <span class="type">int</span>, <span class="type">unsigned</span> <span class="type">long</span>);</span><br><span class="line">    <span class="type">int</span> (*mmap) (<span class="keyword">struct</span> file *, <span class="keyword">struct</span> vm_area_struct *);</span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span> mmap_supported_flags;</span><br><span class="line">    <span class="type">int</span> (*open) (<span class="keyword">struct</span> inode *, <span class="keyword">struct</span> file *);</span><br><span class="line">    <span class="type">int</span> (*flush) (<span class="keyword">struct</span> file *, <span class="type">fl_owner_t</span> id);</span><br><span class="line">    <span class="type">int</span> (*release) (<span class="keyword">struct</span> inode *, <span class="keyword">struct</span> file *);</span><br><span class="line">    <span class="type">int</span> (*fsync) (<span class="keyword">struct</span> file *, <span class="type">loff_t</span>, <span class="type">loff_t</span>, <span class="type">int</span> datasync);</span><br><span class="line">    <span class="type">int</span> (*fasync) (<span class="type">int</span>, <span class="keyword">struct</span> file *, <span class="type">int</span>);</span><br><span class="line">    <span class="type">int</span> (*lock) (<span class="keyword">struct</span> file *, <span class="type">int</span>, <span class="keyword">struct</span> file_lock *);</span><br><span class="line">    <span class="type">ssize_t</span> (*sendpage) (<span class="keyword">struct</span> file *, <span class="keyword">struct</span> page *, <span class="type">int</span>, <span class="type">size_t</span>, <span class="type">loff_t</span> *, <span class="type">int</span>);</span><br><span class="line">    <span class="type">unsigned</span> <span class="title function_">long</span> <span class="params">(*get_unmapped_area)</span><span class="params">(<span class="keyword">struct</span> file *, <span class="type">unsigned</span> <span class="type">long</span>, <span class="type">unsigned</span> <span class="type">long</span>, <span class="type">unsigned</span> <span class="type">long</span>, <span class="type">unsigned</span> <span class="type">long</span>)</span>;</span><br><span class="line">    <span class="type">int</span> (*check_flags)(<span class="type">int</span>);</span><br><span class="line">    <span class="type">int</span> (*flock) (<span class="keyword">struct</span> file *, <span class="type">int</span>, <span class="keyword">struct</span> file_lock *);</span><br><span class="line">    <span class="type">ssize_t</span> (*splice_write)(<span class="keyword">struct</span> pipe_inode_info *, <span class="keyword">struct</span> file *, <span class="type">loff_t</span> *, <span class="type">size_t</span>, <span class="type">unsigned</span> <span class="type">int</span>);</span><br><span class="line">    <span class="type">ssize_t</span> (*splice_read)(<span class="keyword">struct</span> file *, <span class="type">loff_t</span> *, <span class="keyword">struct</span> pipe_inode_info *, <span class="type">size_t</span>, <span class="type">unsigned</span> <span class="type">int</span>);</span><br><span class="line">    <span class="type">void</span> (*splice_eof)(<span class="keyword">struct</span> file *file);</span><br><span class="line">    <span class="type">int</span> (*setlease)(<span class="keyword">struct</span> file *, <span class="type">long</span>, <span class="keyword">struct</span> file_lock **, <span class="type">void</span> **);</span><br><span class="line">    <span class="type">long</span> (*fallocate)(<span class="keyword">struct</span> file *file, <span class="type">int</span> mode, <span class="type">loff_t</span> offset,</span><br><span class="line">                      <span class="type">loff_t</span> len);</span><br><span class="line">    <span class="type">void</span> (*show_fdinfo)(<span class="keyword">struct</span> seq_file *m, <span class="keyword">struct</span> file *f);</span><br><span class="line"><span class="meta">#<span class="keyword">ifndef</span> CONFIG_MMU</span></span><br><span class="line">    <span class="type">unsigned</span> (*mmap_capabilities)(<span class="keyword">struct</span> file *);</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">    <span class="type">ssize_t</span> (*copy_file_range)(<span class="keyword">struct</span> file *, <span class="type">loff_t</span>, <span class="keyword">struct</span> file *,</span><br><span class="line">                               <span class="type">loff_t</span>, <span class="type">size_t</span>, <span class="type">unsigned</span> <span class="type">int</span>);</span><br><span class="line">    <span class="type">loff_t</span> (*remap_file_range)(<span class="keyword">struct</span> file *file_in, <span class="type">loff_t</span> pos_in,</span><br><span class="line">                               <span class="keyword">struct</span> file *file_out, <span class="type">loff_t</span> pos_out,</span><br><span class="line">                               <span class="type">loff_t</span> len, <span class="type">unsigned</span> <span class="type">int</span> remap_flags);</span><br><span class="line">    <span class="type">int</span> (*fadvise)(<span class="keyword">struct</span> file *, <span class="type">loff_t</span>, <span class="type">loff_t</span>, <span class="type">int</span>);</span><br><span class="line">    <span class="type">int</span> (*uring_cmd)(<span class="keyword">struct</span> io_uring_cmd *ioucmd, <span class="type">unsigned</span> <span class="type">int</span> issue_flags);</span><br><span class="line">    <span class="type">int</span> (*uring_cmd_iopoll)(<span class="keyword">struct</span> io_uring_cmd *, <span class="keyword">struct</span> io_comp_batch *,</span><br><span class="line">                            <span class="type">unsigned</span> <span class="type">int</span> poll_flags);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>这是<strong>file_operation</strong>结构体，里面有很多函数指针成员（其实这个结构体比较简单，我只是举个例子），比如我们只要使用到<strong>read</strong>和<strong>write</strong>成员，那么我们只需写成如下的样子</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">file_operations</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">module</span> *<span class="title">owner</span>;</span></span><br><span class="line">    <span class="type">loff_t</span> (*llseek) (<span class="keyword">struct</span> file *, <span class="type">loff_t</span>, <span class="type">int</span>);</span><br><span class="line">    <span class="type">ssize_t</span> (*read) (<span class="keyword">struct</span> file *, <span class="type">char</span> __user *, <span class="type">size_t</span>, <span class="type">loff_t</span> *);</span><br><span class="line">    <span class="type">ssize_t</span> (*write) (<span class="keyword">struct</span> file *, <span class="type">const</span> <span class="type">char</span> __user *, <span class="type">size_t</span>, <span class="type">loff_t</span> *);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>因为结构体只是用于解析对应内存的，我们使用file_operations-&gt;write时，实际上就是访问首地址+偏移，write底下的东西我们用不到，所以也访问不到，所以就无所谓了。但是如果我们要使用到<strong>read</strong>和<strong>release</strong>，那就必须至少导入到release，也就是如下的样子</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">file_operations</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">module</span> *<span class="title">owner</span>;</span></span><br><span class="line">    <span class="type">loff_t</span> (*llseek) (<span class="keyword">struct</span> file *, <span class="type">loff_t</span>, <span class="type">int</span>);</span><br><span class="line">    <span class="type">ssize_t</span> (*read) (<span class="keyword">struct</span> file *, <span class="type">char</span> __user *, <span class="type">size_t</span>, <span class="type">loff_t</span> *);</span><br><span class="line">    <span class="type">ssize_t</span> (*write) (<span class="keyword">struct</span> file *, <span class="type">const</span> <span class="type">char</span> __user *, <span class="type">size_t</span>, <span class="type">loff_t</span> *);</span><br><span class="line">    <span class="type">ssize_t</span> (*read_iter) (<span class="keyword">struct</span> kiocb *, <span class="keyword">struct</span> iov_iter *);</span><br><span class="line">    <span class="type">ssize_t</span> (*write_iter) (<span class="keyword">struct</span> kiocb *, <span class="keyword">struct</span> iov_iter *);</span><br><span class="line">    <span class="type">int</span> (*iopoll)(<span class="keyword">struct</span> kiocb *kiocb, <span class="keyword">struct</span> io_comp_batch *,</span><br><span class="line">                  <span class="type">unsigned</span> <span class="type">int</span> flags);</span><br><span class="line">    <span class="type">int</span> (*iterate) (<span class="keyword">struct</span> file *, <span class="keyword">struct</span> dir_context *);</span><br><span class="line">    <span class="type">int</span> (*iterate_shared) (<span class="keyword">struct</span> file *, <span class="keyword">struct</span> dir_context *);</span><br><span class="line">    <span class="type">__poll_t</span> (*poll) (<span class="keyword">struct</span> file *, <span class="keyword">struct</span> poll_table_struct *);</span><br><span class="line">    <span class="type">long</span> (*unlocked_ioctl) (<span class="keyword">struct</span> file *, <span class="type">unsigned</span> <span class="type">int</span>, <span class="type">unsigned</span> <span class="type">long</span>);</span><br><span class="line">    <span class="type">long</span> (*compat_ioctl) (<span class="keyword">struct</span> file *, <span class="type">unsigned</span> <span class="type">int</span>, <span class="type">unsigned</span> <span class="type">long</span>);</span><br><span class="line">    <span class="type">int</span> (*mmap) (<span class="keyword">struct</span> file *, <span class="keyword">struct</span> vm_area_struct *);</span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span> mmap_supported_flags;</span><br><span class="line">    <span class="type">int</span> (*open) (<span class="keyword">struct</span> inode *, <span class="keyword">struct</span> file *);</span><br><span class="line">    <span class="type">int</span> (*flush) (<span class="keyword">struct</span> file *, <span class="type">fl_owner_t</span> id);</span><br><span class="line">    <span class="type">int</span> (*release) (<span class="keyword">struct</span> inode *, <span class="keyword">struct</span> file *);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>这点应该很好理解。但是有时候你想用的成员之前有结构体嵌套的话，那就得导入很多结构体了，比较麻烦</p>
+<p>所以为了解决这个问题，我们需要探讨一下有没有更加简单的方法</p>
+<p>是有的，我们刚刚提到：“我们使用file_operations-&gt;write时，实际上就是访问首地址+偏移”，首地址很好解决，在kpm模块编写的情景下，首地址就是hook的函数所对应的参数（内存中该结构体的首地址）。那么我们就只要解决偏移量计算的问题了。现在先假设我们已经知道偏移量了，我们该如何使用呢？</p>
+<p>这里有两种方法：</p>
+<h3 id="1-1char-x-占位"><a href="#1-1char-x-占位" class="headerlink" title="1.1char[x]占位"></a>1.1char[x]占位</h3><p>我们知道结构体的内存布局需要遵循内存对齐的原则，即结构体总内存始终是成员中所占内存最大的成员所占的内存 * 成员数，听起来很绕口，其实应该很好理解的，这样规定也很简单，原因就是加快了我们访问成员的速度。ok接下来看看这种方式该如何使用吧。假设还是用file_operations结构体：</p>
+<p>当我们想使用flush成员，此时我们已经知道了flush相对结构体首地址的偏移offset，那么我们可以这样定义结构体：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">file_operations</span> &#123;</span></span><br><span class="line">    <span class="type">char</span>[offset];</span><br><span class="line">    <span class="type">int</span> (*flush) (<span class="keyword">struct</span> file *, <span class="type">fl_owner_t</span> id);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>这样使用起来是不是就简洁多了，当然如果你不想定义结构体，那你也可以直接使用，但是可读性就没那么好了。</p>
+<h3 id="1-2直接使用"><a href="#1-2直接使用" class="headerlink" title="1.2直接使用"></a>1.2直接使用</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="type">char</span> *name = *(<span class="type">const</span> <span class="type">char</span> **)(pathname + name_offset);</span><br></pre></td></tr></table></figure>
+<p>但我觉得这样可读性不是很好</p>
+<h2 id="2-计算成员偏移量"><a href="#2-计算成员偏移量" class="headerlink" title="2.计算成员偏移量"></a>2.计算成员偏移量</h2><p>这里依然有几种方法。但是使用场景不太一样</p>
+<h3 id="2-1已有内核源码"><a href="#2-1已有内核源码" class="headerlink" title="2.1已有内核源码"></a>2.1已有内核源码</h3><p>假设我们已经有了内核源码，那么我们可以直接编译一个.ko文件，打印对应成员的偏移量。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">test</span>&#123;</span></span><br><span class="line">    <span class="type">int</span> a;</span><br><span class="line">    <span class="type">char</span> b;</span><br><span class="line">    <span class="type">short</span> c;</span><br><span class="line">    <span class="type">long</span> d;</span><br><span class="line">    <span class="type">char</span> e;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">test</span> <span class="title">t</span>;</span></span><br><span class="line">    <span class="type">size_t</span> offset = (<span class="type">size_t</span>)((<span class="type">void</span> *)&amp;t.d - (<span class="type">void</span> *)&amp;t);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;size = %d\n&quot;</span>, offset);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后直接使用就好了。</p>
+<h3 id="2-2无内核源码，动态计算"><a href="#2-2无内核源码，动态计算" class="headerlink" title="2.2无内核源码，动态计算"></a>2.2无内核源码，动态计算</h3><p>这个操作就比较神奇了，当然我之前没接触过内核开发，所以孤陋寡闻觉得神奇吧。</p>
+<p>原理：通过逆向内核，阅读汇编代码逻辑，确定加载指令类型和大概范围。在内核模块中通过遍历函数指令获取对应结构体的偏移量。</p>
+<p>比如想要获取如下结构体的<strong>context</strong>成员：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">binder_proc</span> &#123;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">hlist_node</span> <span class="title">proc_node</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">rb_root</span> <span class="title">threads</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">rb_root</span> <span class="title">nodes</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">rb_root</span> <span class="title">refs_by_desc</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">rb_root</span> <span class="title">refs_by_node</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">waiting_threads</span>;</span></span><br><span class="line">	<span class="type">int</span> pid;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">task_struct</span> *<span class="title">tsk</span>;</span></span><br><span class="line">	<span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">cred</span> *<span class="title">cred</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">hlist_node</span> <span class="title">deferred_work_node</span>;</span></span><br><span class="line">	<span class="type">int</span> deferred_work;</span><br><span class="line">	<span class="type">int</span> outstanding_txns;</span><br><span class="line">	<span class="type">bool</span> is_dead;</span><br><span class="line">	<span class="type">bool</span> is_frozen;</span><br><span class="line">	<span class="type">bool</span> sync_recv;</span><br><span class="line">	<span class="type">bool</span> async_recv;</span><br><span class="line">	<span class="type">wait_queue_head_t</span> freeze_wait;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">dbitmap</span> <span class="title">dmap</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">todo</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">binder_stats</span> <span class="title">stats</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">delivered_death</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">delivered_freeze</span>;</span></span><br><span class="line">	u32 max_threads;</span><br><span class="line">	<span class="type">int</span> requested_threads;</span><br><span class="line">	<span class="type">int</span> requested_threads_started;</span><br><span class="line">	<span class="type">int</span> tmp_ref;</span><br><span class="line">	<span class="type">long</span> default_priority;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">dentry</span> *<span class="title">debugfs_entry</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">binder_alloc</span> <span class="title">alloc</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">binder_context</span> *<span class="title">context</span>;</span></span><br><span class="line">	<span class="type">spinlock_t</span> inner_lock;</span><br><span class="line">	<span class="type">spinlock_t</span> outer_lock;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">dentry</span> *<span class="title">binderfs_entry</span>;</span></span><br><span class="line">	<span class="type">bool</span> oneway_spam_detection_enabled;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>于是我们可以找到一个使用了<strong>binder_proc.context</strong>的函数，去逆向看他的汇编代码，这里选用<strong>binder_transaction</strong>函数</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">binder_transaction</span><span class="params">(<span class="keyword">struct</span> binder_proc *proc,</span></span><br><span class="line"><span class="params">			       <span class="keyword">struct</span> binder_thread *thread,</span></span><br><span class="line"><span class="params">			       <span class="keyword">struct</span> binder_transaction_data *tr, <span class="type">int</span> reply,</span></span><br><span class="line"><span class="params">			       <span class="type">binder_size_t</span> extra_buffers_size)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="comment">/**/</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">binder_context</span> *<span class="title">context</span> =</span> proc-&gt;context;</span><br><span class="line">    <span class="comment">/**/</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们就可以这么计算：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">uint32_t</span>* binder_transaction_src = (<span class="type">uint32_t</span>*)binder_transaction;  <span class="comment">// 将函数指针 binder_transaction 强转为 uint32_t* 类型指针</span></span><br><span class="line">    <span class="keyword">for</span> (u32 i = <span class="number">0</span>; i &lt; <span class="number">0x20</span>; i++) &#123;                               <span class="comment">// 开始一个循环，遍历函数的前 32 条指令（0x20 是 16 进制，等于十进制 32）</span></span><br><span class="line">        <span class="keyword">if</span> (binder_transaction_src[i] == ARM64_RET) &#123;              <span class="comment">// 检查当前指令是否是返回指令（ARM64_RET = 0xD65F03C0）</span></span><br><span class="line">            <span class="keyword">break</span>;                                                 <span class="comment">// 如果是返回指令，说明函数结束，退出循环</span></span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> ((binder_transaction_src[i] &amp; MASK_LDR_64_X0) == INST_LDR_64_X0) &#123;  <span class="comment">// 检查当前指令是否是特定的 LDR 加载指令</span></span><br><span class="line">            <span class="type">uint64_t</span> imm12 = bits32(binder_transaction_src[i], <span class="number">21</span>, <span class="number">10</span>);  <span class="comment">// 从指令中提取 12 位立即数 imm12（位于第 21 到 10 位）</span></span><br><span class="line">            binder_proc_context_offset = sign64_extend((imm12 &lt;&lt; <span class="number">0b11</span>u), <span class="number">16u</span>);  <span class="comment">// 将 imm12 左移 3 位并进行符号扩展，计算最终偏移量</span></span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>自己用感觉还是<strong>1.1配合2.1</strong>用起来比较简单点。要想适配不同内核的话就<strong>1.2配合2.1</strong>，多定义几个版本的偏移，但是要下载好多版本的内核源码，似乎也不是很方便。在写这篇文章时觉得可能会有简单点的方法，但是写到最后才发现我所能想到的似乎都不是很简单哈哈哈。</p>
+
+        
+      </div>
+
+         
+    </div>
+    
+     
+  </div>
+  
+    
+<nav id="article-nav">
+  <a class="article-nav-btn left  disabled "
+     >
+    <i class="fa-solid fa-angle-left"></i>
+    <p class="title-text">
+        
+    </p>
+  </a>
+  <a class="article-nav-btn right "
+    
+      href="/2024/12/26/ELFLoador/"
+      title="ElfLoader的实现及原理"
+     >
+
+    <p class="title-text">
+      
+        ElfLoader的实现及原理
+        
+    </p>
+    <i class="fa-solid fa-angle-right"></i>
+  </a>
+</nav>
+
+
+  
+</article>
+
+
+
+
+
+    </div>
+    <div id="footer-wrapper">
+      <footer id="footer" style="text-align: center;">
+  <div id="footer-info" class="inner">
+    <p>到底了</p>
+    <p>
+      &copy; 2025 Yuuki
+    </p>
+  </div>
+</footer>
+    </div>
+    <div class="back-to-top-wrapper">
+    <button id="back-to-top-btn" class="back-to-top-btn hide" onclick="topFunction()">
+        <i class="fa-solid fa-angle-up"></i>
+    </button>
+</div>
+
+<script>
+    function topFunction() {
+        window.scroll({ top: 0, behavior: 'smooth' });
+    }
+    let btn = document.getElementById('back-to-top-btn');
+    function scrollFunction() {
+        if (document.body.scrollTop > 600 || document.documentElement.scrollTop > 600) {
+            btn.classList.remove('hide')
+        } else {
+            btn.classList.add('hide')
+        }
+    }
+    window.onscroll = function() {
+        scrollFunction();
+    }
+</script>
+
+  </div>
+  <script src="/js/light-dark-switch.js"></script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"left","width":220,"height":460,"hOffset":0,"vOffset":-100},"mobile":{"show":true},"react":{"opacity":0.85},"log":false});</script></body>
+</html>

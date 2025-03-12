@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+
+
+<html theme="dark" showBanner="true" hasBanner="true" > 
+<link href="https://cdn.staticfile.org/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet">
+<link href="https://cdn.staticfile.org/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet">
+<link href="https://cdn.staticfile.org/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet">
+<script src="/js/color.global.min.js" ></script>
+<script src="/js/load-settings.js" ></script>
+<head>
+  <meta charset="utf-8">
+  
+  
+  
+
+  
+  <title>简述神经网络 | Yuuki</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <link rel="preload" href="/css/fonts/Roboto-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+  <link rel="preload" href="/css/fonts/Roboto-Bold.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+
+  <meta name="description" content="基于MPL架构的神经网络 序言： 最近一个名为KAN的神经网络架突然爆火，所以借此机会了解了一下神经网络相关的概念。并分析KAN与传统架构有哪些不同。本文仅代表笔者的个人理解，不涉及严谨的数学证明，若有错误之处还请指正。  正片： 神经网络好像是一个很高级的词汇，让我们听见就觉得其遥不可及。实际上它本质上就是一个函数。为什么这么说呢，就拿最基本的人脸识别来举例子吧。  人脸识别最基本的流程是什么呢">
+<meta property="og:type" content="article">
+<meta property="og:title" content="简述神经网络">
+<meta property="og:url" content="http://example.com/2024/12/25/NeuralNetwork/index.html">
+<meta property="og:site_name" content="Yuuki">
+<meta property="og:description" content="基于MPL架构的神经网络 序言： 最近一个名为KAN的神经网络架突然爆火，所以借此机会了解了一下神经网络相关的概念。并分析KAN与传统架构有哪些不同。本文仅代表笔者的个人理解，不涉及严谨的数学证明，若有错误之处还请指正。  正片： 神经网络好像是一个很高级的词汇，让我们听见就觉得其遥不可及。实际上它本质上就是一个函数。为什么这么说呢，就拿最基本的人脸识别来举例子吧。  人脸识别最基本的流程是什么呢">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://tse4-mm.cn.bing.net/th/id/OIP-C.B9k1miuH_RXGW1KE8k7fJwAAAA?w=187&h=180&c=7&r=0&o=5&dpr=1.3&pid=1.7">
+<meta property="og:image" content="http://example.com/2024/12/25/NeuralNetwork/2024-05-16-11-58-59-image.png">
+<meta property="og:image" content="http://example.com/2024/12/25/NeuralNetwork/2024-05-16-13-50-58-image.png">
+<meta property="og:image" content="http://example.com/2024/12/25/NeuralNetwork/2024-05-16-20-57-57-image.png">
+<meta property="og:image" content="http://example.com/2024/12/25/NeuralNetwork/2024-05-16-21-35-14-image.png">
+<meta property="og:image" content="http://example.com/2024/12/25/NeuralNetwork/2024-05-16-21-39-44-image.png">
+<meta property="og:image" content="http://example.com/2024/12/25/NeuralNetwork/2024-05-16-21-40-18-image.png">
+<meta property="article:published_time" content="2024-12-25T14:39:45.000Z">
+<meta property="article:modified_time" content="2025-03-12T08:50:23.503Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="MPL">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tse4-mm.cn.bing.net/th/id/OIP-C.B9k1miuH_RXGW1KE8k7fJwAAAA?w=187&h=180&c=7&r=0&o=5&dpr=1.3&pid=1.7">
+  
+  
+    <link rel="shortcut icon" href="/site_img/icon.jpg">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+  
+  
+    
+<div id="banner" class="">
+  <img src="/site_img/backg.png" itemprop="image">
+  <div id="banner-dim"></div>
+</div>
+ 
+   
+  <div id="main-grid" class="  ">
+    <div id="nav" class=""  >
+      <navbar id="navbar">
+  <nav id="title-nav">
+    <a href="/">
+      <div id="vivia-logo">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+      <div>Yuuki </div>
+    </a>
+  </nav>
+  <nav id="main-nav">
+    
+      <a class="main-nav-link" href="/">Home</a>
+    
+      <a class="main-nav-link" href="/archives">Archives</a>
+    
+      <a class="main-nav-link" href="/about">About</a>
+    
+  </nav>
+  <nav id="sub-nav">
+    <a id="theme-btn" class="nav-icon">
+      <span class="light-mode-icon"><svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M438.5-829.913v-48q0-17.452 11.963-29.476 11.964-12.024 29.326-12.024 17.363 0 29.537 12.024t12.174 29.476v48q0 17.452-11.963 29.476-11.964 12.024-29.326 12.024-17.363 0-29.537-12.024T438.5-829.913Zm0 747.826v-48q0-17.452 11.963-29.476 11.964-12.024 29.326-12.024 17.363 0 29.537 12.024t12.174 29.476v48q0 17.452-11.963 29.476-11.964 12.024-29.326 12.024-17.363 0-29.537-12.024T438.5-82.087ZM877.913-438.5h-48q-17.452 0-29.476-11.963-12.024-11.964-12.024-29.326 0-17.363 12.024-29.537t29.476-12.174h48q17.452 0 29.476 11.963 12.024 11.964 12.024 29.326 0 17.363-12.024 29.537T877.913-438.5Zm-747.826 0h-48q-17.452 0-29.476-11.963-12.024-11.964-12.024-29.326 0-17.363 12.024-29.537T82.087-521.5h48q17.452 0 29.476 11.963 12.024 11.964 12.024 29.326 0 17.363-12.024 29.537T130.087-438.5Zm660.174-290.87-34.239 32q-12.913 12.674-29.565 12.174-16.653-.5-29.327-13.174-12.674-12.673-12.554-28.826.12-16.152 12.794-28.826l33-35q12.913-12.674 30.454-12.674t30.163 12.847q12.709 12.846 12.328 30.826-.38 17.98-13.054 30.653ZM262.63-203.978l-32 34q-12.913 12.674-30.454 12.674t-30.163-12.847q-12.709-12.846-12.328-30.826.38-17.98 13.054-30.653l33.239-31q12.913-12.674 29.565-12.174 16.653.5 29.327 13.174 12.674 12.673 12.554 28.826-.12 16.152-12.794 28.826Zm466.74 33.239-32-33.239q-12.674-12.913-12.174-29.565.5-16.653 13.174-29.327 12.673-12.674 28.826-13.054 16.152-.38 28.826 12.294l35 33q12.674 12.913 12.674 30.454t-12.847 30.163q-12.846 12.709-30.826 12.328-17.98-.38-30.653-13.054ZM203.978-697.37l-34-33q-12.674-12.913-13.174-29.945-.5-17.033 12.174-29.707t31.326-13.293q18.653-.62 31.326 13.054l32 34.239q11.674 12.913 11.174 29.565-.5 16.653-13.174 29.327-12.673 12.674-28.826 12.554-16.152-.12-28.826-12.794ZM480-240q-100 0-170-70t-70-170q0-100 70-170t170-70q100 0 170 70t70 170q0 100-70 170t-170 70Zm-.247-82q65.703 0 111.475-46.272Q637-414.544 637-480.247t-45.525-111.228Q545.95-637 480.247-637t-111.475 45.525Q323-545.95 323-480.247t45.525 111.975Q414.05-322 479.753-322ZM481-481Z"/></svg></span>
+      <span class="dark-mode-icon"><svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M480.239-116.413q-152.63 0-258.228-105.478Q116.413-327.37 116.413-480q0-130.935 77.739-227.435t206.304-125.043q43.022-9.631 63.87 10.869t3.478 62.805q-8.891 22.043-14.315 44.463-5.424 22.42-5.424 46.689 0 91.694 64.326 155.879 64.325 64.186 156.218 64.186 24.369 0 46.978-4.946 22.609-4.945 44.413-14.076 42.826-17.369 62.967 1.142 20.142 18.511 10.511 61.054Q807.174-280 712.63-198.206q-94.543 81.793-232.391 81.793Zm0-95q79.783 0 143.337-40.217 63.554-40.218 95.793-108.283-15.608 4.044-31.097 5.326-15.49 1.283-31.859.805-123.706-4.066-210.777-90.539-87.071-86.473-91.614-212.092-.24-16.369.923-31.978 1.164-15.609 5.446-30.978-67.826 32.478-108.282 96.152Q211.652-559.543 211.652-480q0 111.929 78.329 190.258 78.329 78.329 190.258 78.329ZM466.13-465.891Z"/></svg></span>
+    </a>
+    
+    <div id="nav-menu-btn" class="nav-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M177.37-252.282q-17.453 0-29.477-11.964-12.024-11.963-12.024-29.326t12.024-29.537q12.024-12.174 29.477-12.174h605.26q17.453 0 29.477 11.964 12.024 11.963 12.024 29.326t-12.024 29.537q-12.024 12.174-29.477 12.174H177.37Zm0-186.218q-17.453 0-29.477-11.963-12.024-11.964-12.024-29.326 0-17.363 12.024-29.537T177.37-521.5h605.26q17.453 0 29.477 11.963 12.024 11.964 12.024 29.326 0 17.363-12.024 29.537T782.63-438.5H177.37Zm0-186.217q-17.453 0-29.477-11.964-12.024-11.963-12.024-29.326t12.024-29.537q12.024-12.174 29.477-12.174h605.26q17.453 0 29.477 11.964 12.024 11.963 12.024 29.326t-12.024 29.537q-12.024 12.174-29.477 12.174H177.37Z"/></svg>
+    </div>
+  </nav>
+</navbar>
+<div id="nav-dropdown" class="hidden">
+  <div id="dropdown-link-list">
+    
+      <a class="nav-dropdown-link" href="/">Home</a>
+    
+      <a class="nav-dropdown-link" href="/archives">Archives</a>
+    
+      <a class="nav-dropdown-link" href="/about">About</a>
+    
+     
+    </div>
+</div>
+<script>
+  let dropdownBtn = document.getElementById("nav-menu-btn");
+  let dropdownEle = document.getElementById("nav-dropdown");
+  dropdownBtn.onclick = function() {
+    dropdownEle.classList.toggle("hidden");
+  }
+</script>
+    </div>
+    <div id="sidebar-wrapper">
+      <sidebar id="sidebar">
+  
+    <div class="widget-wrap">
+  <div class="info-card">
+    <div class="avatar">
+      
+        <image src=/site_img/icon.jpg></image>
+      
+      <div class="img-dim"></div>
+    </div>
+    <div class="info">
+      <div class="username">Yuuki </div>
+      <div class="dot"></div>
+      <div class="subtitle">不说话 装高手 </div>
+      <div class="link-list">
+        
+          <a class="link-btn" target="_blank" rel="noopener" href="https://x.com/LiYangv?t=kbZV9-LGilEE-2pg_2GBeQ&s=09" title="Twitter"><i class="fa-brands fa-twitter"></i></a>
+        
+          <a class="link-btn" target="_blank" rel="noopener" href="https://steamcommunity.com/profiles/76561199358468625/" title="Steam"><i class="fa-brands fa-steam"></i></a>
+        
+          <a class="link-btn" target="_blank" rel="noopener" href="https://github.com/SoyBeanMilkx" title="GitHub"><i class="fa-brands fa-github"></i></a>
+         
+      </div>  
+    </div>
+  </div>
+</div>
+
+  
+  <div class="sticky">
+    
+      
+
+
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Categories</h3>
+      <div class="category-box">
+            <a class="category-link" href="/categories/Life/">
+                Life
+                <div class="category-count">1</div>
+            </a>
+        
+            <a class="category-link" href="/categories/Android/">
+                Android
+                <div class="category-count">4</div>
+            </a>
+        
+            <a class="category-link" href="/categories/NeuralNetwork/">
+                NeuralNetwork
+                <div class="category-count">1</div>
+            </a>
+        </div>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Tags</h3>
+      <ul class="widget-tag-list" itemprop="keywords"><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/CV/" rel="tag">CV</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/MPL/" rel="tag">MPL</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/elf/" rel="tag">elf</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/env-check/" rel="tag">env_check</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/frida/" rel="tag">frida</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/idea/" rel="tag">idea</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/kernel/" rel="tag">kernel</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/linker/" rel="tag">linker</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/native-camera/" rel="tag">native camera</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/photo/" rel="tag">photo</a></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Archives</h3>
+      
+      
+        <a class="archive-link" href="/archives/2025/03 ">
+          March 2025 
+          <div class="archive-count">1 </div>
+        </a>
+      
+        <a class="archive-link" href="/archives/2024/12 ">
+          December 2024 
+          <div class="archive-count">5 </div>
+        </a>
+      
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Recent Posts</h3>
+      <ul>
+        
+          <a class="recent-link" href="/2025/03/12/StructOffset/" title="内核中结构体偏移计算" >
+            <div class="recent-link-text">
+              内核中结构体偏移计算
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2024/12/26/ELFLoador/" title="ElfLoader的实现及原理" >
+            <div class="recent-link-text">
+              ElfLoader的实现及原理
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2024/12/25/PassFridacheck/" title="过Frida检测的一般思路" >
+            <div class="recent-link-text">
+              过Frida检测的一般思路
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2024/12/25/NeuralNetwork/" title="简述神经网络" >
+            <div class="recent-link-text">
+              简述神经网络
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2024/12/25/MobileMonitor/" title="旧手机改监控" >
+            <div class="recent-link-text">
+              旧手机改监控
+            </div>
+          </a>
+        
+      </ul>
+    </div>
+  </div>
+
+    
+  </div>
+</sidebar>
+    </div>
+    <div id="content-body">
+       
+
+
+<article id="post-NeuralNetwork" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  
+    
+   
+  <div class="article-inner">
+    <div class="article-main">
+      <header class="article-header">
+        
+<div class="main-title-bar">
+  <div class="main-title-dot"></div>
+  
+    
+      <h1 class="p-name article-title" itemprop="headline name">
+        简述神经网络
+      </h1>
+    
+  
+</div>
+
+        <div class='meta-info-bar'>
+          <div class="meta-info">
+  <time class="dt-published" datetime="2024-12-25T14:39:45.000Z" itemprop="datePublished">2024-12-25</time>
+</div>
+          <div class="need-seperator meta-info">
+            <div class="meta-cate-flex">
+  
+  <a class="meta-cate-link" href="/categories/NeuralNetwork/">NeuralNetwork</a>
+   
+</div>
+  
+          </div>
+          <div class="wordcount need-seperator meta-info">
+            5.6k words 
+          </div>
+        </div>
+        
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/MPL/" rel="tag">MPL</a></li></ul>
+
+      </header>
+      <div class="e-content article-entry" itemprop="articleBody">
+        
+          <p>基于MPL架构的神经网络</p>
+<h2 id="序言："><a href="#序言：" class="headerlink" title="序言："></a>序言：</h2><p> 最近一个名为KAN的神经网络架突然爆火，所以借此机会了解了一下神经网络相关的概念。并分析KAN与传统架构有哪些不同。本文仅代表笔者的个人理解，不涉及严谨的数学证明，若有错误之处还请指正。</p>
+<h2 id=""><a href="#" class="headerlink" title=" "></a> </h2><h2 id="正片："><a href="#正片：" class="headerlink" title="正片："></a>正片：</h2><p> 神经网络好像是一个很高级的词汇，让我们听见就觉得其遥不可及。实际上它本质上就是一个<strong>函数</strong>。为什么这么说呢，就拿最基本的人脸识别来举例子吧。</p>
+<p> 人脸识别最基本的流程是什么呢，比如我们宿舍的门禁系统，由摄像头拍摄帧流，把数据流发送给上位机，在上位机中对拍摄到的某帧画面进行标记人脸检测人脸，最终输出结果，开门或是不开门。这个过程可以分为三个步骤：</p>
+<ol>
+<li><p><strong>输入图片</strong></p>
+</li>
+<li><p><strong>处理图片</strong></p>
+</li>
+<li><p><strong>输出结果</strong></p>
+</li>
+</ol>
+<p>输入 -&gt; 处理 -&gt; 输出，<strong>这本质是不是把一个集合里的元素映射到另一个集合</strong>呢，这不就是我们初中就开始接触的函数吗？假设我们有一个函数f，f的参数（自变量）是我们输入的图片，直觉上可能会以为f的值就是一个布尔值（是否打开门），可以这么理解，但实际上f是一个浮点数(<strong><em>confident</em></strong>) 它代表<strong>置信度</strong>或者<strong>置信距离</strong>，这个数可以用来衡量你是某个人的概率大小。怎么样，原理是不是很简单？</p>
+<p>那么我们现在是否只要找到一个函数f，能够满足我们上述需要的映射关系，人脸识别这个项目就大功告成了？是这样的，所谓的训练模型，就是在寻找这样的一个函数，它描述了输入与输出之间的转换关系，而我们的神经网络就是函数f（当然这么说可能有些不严谨）。</p>
+<p><img title="" src="https://tse4-mm.cn.bing.net/th/id/OIP-C.B9k1miuH_RXGW1KE8k7fJwAAAA?w=187&h=180&c=7&r=0&o=5&dpr=1.3&pid=1.7" alt="神经网络 的图像结果" width="260"></p>
+<p>让我们来看一个非常经典的神经网络吧，我们可以看到它共有三层，即 输入层，隐藏层，输出层。我们可以看到，它实际上就是一张有向<strong>有向加权图</strong>，圆圈代表节点，箭头代表边，它的每条边都有自己的权重。我们可以看到各个节点之间是<strong>全连接</strong>的，假设每一层从上到下每个节点的索引是1,2,3,…,n，记第i层第j个节点为$\boldsymbol{layer_{i,j}}$，记$\boldsymbol{layer_{i,j}}$和$\boldsymbol{layer_{i-1,k}}$间的边的权值为$\boldsymbol{w_{j,k}}$，，那么第i层中的某个节点的值就等于上一层的节点加权求和，即：</p>
+<script type="math/tex; mode=display">
+layer_{i,j} = \sum\limits_{k=1}^{n} layer_{i-1,k}</script><p>这是最简单的形式，实际上每个节点还需加上偏置$\boldsymbol{b_{i-1}}$，在加权求和之后，影藏层还会对得到的值进行一次非线性变换（即把得到的值带入激活函数），这里激活函数选择使用大名鼎鼎的<strong>Sigmoid函数</strong>。Sigmoid函数是一个在生物学中常见的S型函数，也称为S型生长曲线。在深度学习中，由于其单增以及反函数单增等性质，Sigmoid函数常被用作神经网络的激活函数，将变量映射到[0,1]之间。其表达式如下：</p>
+<script type="math/tex; mode=display">
+Sigmoid(x) = \frac{1}{1 + e^{-x}}</script><p><img src="2024-05-16-11-58-59-image.png" alt=""></p>
+<p>所以真正的$\boldsymbol{layer_{i,j}}$的值就很明了了：</p>
+<script type="math/tex; mode=display">
+layer_{i,j} = Sigmoid \circ (\sum\limits_{k=1}^{n} layer_{i-1,k} + b_{i-1})</script><p>但是实际的神经网络当然不止一个隐藏层，假设有k个隐藏层，那么加上输入层和输出层就一共有k+2层，这样我们上述的表述方法就不是很方便（其实我觉得挺方便的），那么我们可以引入线性代数中的矩阵乘法来表述上述函数，即：</p>
+<script type="math/tex; mode=display">
+MPL(x) = (\Phi_k \circ \Phi_{k-1} \circ \Phi_{k-2} \circ ... \circ \Phi_{1})x = \Phi_{Hidden} \circ x</script><p>其中$\boldsymbol{\Phi_k}$表示第k个隐藏层的函数矩阵，$\boldsymbol{x}$为输入矩阵。与单层神经网络不同。</p>
+<p>理论证明，两层神经网络可以无限逼近任意连续函数。这背后涉及到一个数学定理，即<strong>通用近似定理</strong>或<strong>万能近似定理</strong>（<strong>Universal Approximation theorem</strong>）。<strong><em>接下来的证明直接跳过也没有关系，不影响对神经网络的理解</em></strong></p>
+<blockquote>
+<p>一个前馈神经网络如果具有线性输出层和至少一层具有任何一种‘‘挤压’’ 性质的激活函数（例如logistic sigmoid激活函数）的隐藏层，只要给予网络足够数量的隐藏单元，它可以以任意的精度来近似任何<strong>从一个有限维空间到另一个有限维空间</strong>的Borel 可测函数。</p>
+<p>万能近似定理意味着无论我们试图学习什么函数，我们知道一个大的MLP 一定能够表示这个函数。然而，我们不能保证训练算法能够学得这个函数。即使MLP能够表示该函数，学习也可能因两个不同的原因而失败。</p>
+<ol>
+<li>用于训练的优化算法可能找不到用于期望函数的参数值。</li>
+<li>训练算法可能由于过拟合而选择了错误的函数。</li>
+</ol>
+</blockquote>
+<p>详细证明可以看一下这个回答：</p>
+<p><a target="_blank" rel="noopener" href="https://ai.stackexchange.com/questions/13317/where-can-i-find-the-proof-of-the-universal-approximation-theorem">Where can I find the proof of the universal approximation theorem?</a></p>
+<p>激活函数就拿Sigmoid函数举例吧，神经网络是最简单的只有一个隐藏层的结构（第一张图）。接下来我们来不太严谨的证明一下这个定理：</p>
+<p>我们的本质是加权求和之后的值作为自变量传入Sigmoid函数，加权求和后得到的函数实际上是一个线性函数（一次函数），将一次函数传入Sigmoid函数后，它会被扭曲成一个非线性的函数，假设传入的一次函数为$kx+b$，新函数则是$Sigmoid(kx+b)$，简单分析一下，$b$在$k$固定时只影响对称中心的水平坐标，而$k$则会影响函数在对称中心附近的增长率（即斜率），当$k$足够大时，函数会在对称中心处产生一个类似矩形波一样的“分段函数”。而我们的将其传递到下一层时还会再乘以一个新的权重，而我们只要给适当大小的权重，当前层无限的节点加权求和后一定可以拟合任意一条函数。</p>
+<p><img src="2024-05-16-13-50-58-image.png" alt=""></p>
+<p>这是上述图中的mathlab代码，可以跑一下感受一下。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">clc;</span><br><span class="line">clear;</span><br><span class="line"></span><br><span class="line">hLine = <span class="built_in">animatedline</span>(<span class="string">&#x27;Color&#x27;</span>, <span class="string">&#x27;b&#x27;</span>, <span class="string">&#x27;LineWidth&#x27;</span>, <span class="number">2</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">xlabel</span>(<span class="string">&#x27;x&#x27;</span>);</span><br><span class="line"><span class="built_in">ylabel</span>(<span class="string">&#x27;y&#x27;</span>);</span><br><span class="line"><span class="built_in">title</span>(<span class="string">&#x27;Sigmoid(x) = 1 / (1 + exp(-kx-b))&#x27;</span>);</span><br><span class="line">grid on;</span><br><span class="line"></span><br><span class="line"><span class="built_in">xlim</span>([<span class="number">-10</span>, <span class="number">10</span>]);</span><br><span class="line"></span><br><span class="line"><span class="built_in">ylim</span>([<span class="number">0</span>, <span class="number">1</span>]);</span><br><span class="line"></span><br><span class="line">animationDuration = <span class="number">10</span>;</span><br><span class="line"></span><br><span class="line">kRange = <span class="number">0</span>:<span class="number">100</span>;</span><br><span class="line">numSteps = <span class="built_in">numel</span>(kRange);</span><br><span class="line"></span><br><span class="line">timeInterval = animationDuration / numSteps;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> k = kRange</span><br><span class="line">    clc;</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="string">&#x27;当前的 k 值：%d\n&#x27;</span>, k);</span><br><span class="line">    x = <span class="built_in">linspace</span>(<span class="number">-10</span>, <span class="number">10</span>, <span class="number">100</span>);</span><br><span class="line">    y = <span class="number">1</span> ./ (<span class="number">1</span> + <span class="built_in">exp</span>(-k*x));</span><br><span class="line"></span><br><span class="line">    <span class="built_in">clearpoints</span>(hLine);</span><br><span class="line">    <span class="built_in">addpoints</span>(hLine, x, y);</span><br><span class="line">    drawnow;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">pause</span>(timeInterval);</span><br><span class="line"></span><br><span class="line">end</span><br></pre></td></tr></table></figure>
+<h4 id="至此，我们便了解了神经网络的基本原理，接下来我们来更细致的学习一下其中一些操作的过程和内涵："><a href="#至此，我们便了解了神经网络的基本原理，接下来我们来更细致的学习一下其中一些操作的过程和内涵：" class="headerlink" title="至此，我们便了解了神经网络的基本原理，接下来我们来更细致的学习一下其中一些操作的过程和内涵："></a>至此，我们便了解了神经网络的基本原理，接下来我们来更细致的学习一下其中一些操作的过程和内涵：</h4><ul>
+<li><p><strong>模型训练</strong>：上述提到神经网络的本质就是一个蕴含多个参数的函数，我们训练模型的过程就是根据已知的输入和输出来反向求解我们的参数（权重和偏置）。机器学习模型训练的目的，就是使得参数尽可能的与真实的模型逼近。具体做法是这样的。首先给所有参数赋上随机值。我们使用这些随机生成的参数值，来预测训练数据中的样本。样本的预测目标为$y_p$，真实目标为$y$。那么，定义一个值$loss$表示误差函数，则有：</p>
+<p>$loss = (y_p - y)^2$，你或许会问为什么不是$loss = abs(y_p - y)$。刚开始我也有这样的疑问，实际上是因为效率问题，前者在实际计算中效率更高。又因为$y_p$就等于我们输出层的值，即$\boldsymbol{MPL(x)}$，所以有：</p>
+<script type="math/tex; mode=display">
+Loss(x) = (MPL(x) - y)^2</script><p>这个函数被称为<strong>损失函数</strong> <strong>(loss function)</strong>。我们在训练时，我们为了节省时间，是否希望误差函数尽可能变小的更快呢，即花费相对小时间使得误差函数最小。这里需要使用一种重要的算法，即<strong>梯度下降算法</strong>。看起来很高深，其实学过高等数学第二册的都知道梯度这一概念，梯度是一个向量，方向平行于切平面法向量（这里我在初学的时候纠结了很久，始终想不明白为什么是垂直而不是在切平面上，这篇文章做了很好的解释 <a target="_blank" rel="noopener" href="https://blog.csdn.net/mengdeer_Q/article/details/129837449">梯度含义的理解</a>），大小为在函数某点方向导数的最大值。当然这些是他的数学定义，实际上它在我们的生活中无处不在。比如下方的函数曲面是一个个山峰的低谷，我们要从山峰到低谷选择一条相对方便的路径，该怎么选呢，是不是只要在当前点时，朝着当前点方向导数最大的方向走就行了呢（这里本质是<strong>贪心</strong>的策略，而实际问题往往更复杂，所以是相对方便而不是最方便）。</p>
+<p>假设这座山最陡峭的地方是无法通过肉眼立马观察出来的，而是需要一个复杂的工具来测量，同时，你此时正好拥有测量出最陡峭方向的工具。所以，你每走一段距离，都需要一段时间来测量所在位置最陡峭的方向，这是比较耗时的。那么为了在太阳下山之前到达山底，就要尽可能的减少测量方向的次数。这是一个两难的选择，如果测量的频繁，可以保证下山的方向是绝对正确的，但又非常耗时，如果测量的过少，又有偏离轨道的风险。所以需要找到一个合适的测量方向的频率（多久测量一次），来确保下山的方向不错误，同时又不至于耗时太多，在算法中我们称之为<strong>步长</strong>。按照梯度下降算法的思想，它将按如下操作达到最低点：</p>
+<pre><code>1. 明确自己现在所处的位置
+
+2. 找到相对于该位置而言下降最快的方向
+
+3. 沿着第二步找到的方向走一小步，到达一个新的位置，此时的位置肯定比原来低
+
+4. 回到第一步
+
+5. 终止于最低点
+</code></pre><p>按照以上5步，最终达到最低点，这就是梯度下降的完整流程。当然你可能会说，图中不是有不同的低谷吗，你怎么确定哪个最低呢？是的，因为上图并不是标准的凸函数，往往不能找到最小值，只能找到<strong>局部极小值</strong>。所以你可以用不同的<strong>初始位置</strong>进行梯度下降，来寻找更小的极小值点，以趋近<strong>最值点</strong>。</p>
+</li>
+</ul>
+<p><img src="2024-05-16-20-57-57-image.png" alt=""></p>
+<p>所以我们可以知道，梯度就是导数，梯度下降法就是一种通过求目标函数的导数来寻找目标函数最小化的方法。梯度下降目的是找到目标函数最小化时的取值所对应的自变量的值，<strong>目的是为了找自变量$x$。</strong></p>
+<p>算法上的解释：</p>
+<script type="math/tex; mode=display">
+\boldsymbol{x = x - \alpha \cdot \frac {\partial f}{\partial x}}</script><p>其中$f$是关于向量$x$的函，把他们理解成普通的函数就行。$\alpha$在梯度下降算法中被称作为学习率或者步长，意味着我们可以通过$\alpha$来控制每一步走的距离，以保证不要步子跨的太大，其实就是不要走太快，错过了最低点。同时也要保证不要走的太慢，导致太阳下山了，还没有走到山下。所以$\alpha$的选择在梯度下降法中往往是很重要的！不能太大也不能太小，太小的话，可能导致迟迟走不到最低点，太大的话，会导致错过最低点！</p>
+<p>  <img src="2024-05-16-21-35-14-image.png" alt=""></p>
+<h5 id="下图是使用Mathlab实现的梯度下降算法："><a href="#下图是使用Mathlab实现的梯度下降算法：" class="headerlink" title="下图是使用Mathlab实现的梯度下降算法："></a>下图是使用Mathlab实现的梯度下降算法：</h5><p>  <img src="2024-05-16-21-39-44-image.png" alt=""></p>
+<p>  <img src="2024-05-16-21-40-18-image.png" alt=""></p>
+<p>代码如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line">clc;</span><br><span class="line">% 定义目标函数</span><br><span class="line">f = @(x, y) <span class="built_in">peaks</span>(x, y);</span><br><span class="line"></span><br><span class="line">% 定义目标函数的梯度</span><br><span class="line">grad_f = @(x, y) [<span class="number">2</span>*x; <span class="number">2</span>*y];</span><br><span class="line"></span><br><span class="line">% 定义学习率和迭代次数</span><br><span class="line">learning_rate = <span class="number">0.1</span>;</span><br><span class="line">num_iterations = <span class="number">20</span>;</span><br><span class="line"></span><br><span class="line">% 初始化起始点</span><br><span class="line">start_point = [<span class="number">0</span>, <span class="number">1.6</span>];</span><br><span class="line"></span><br><span class="line">% 初始化历史路径</span><br><span class="line">path = start_point;</span><br><span class="line"></span><br><span class="line">% 执行梯度下降算法</span><br><span class="line"><span class="keyword">for</span> i = <span class="number">1</span>:num_iterations</span><br><span class="line">    % 计算梯度</span><br><span class="line">    gradient = <span class="built_in">grad_f</span>(<span class="built_in">start_point</span>(<span class="number">1</span>), <span class="built_in">start_point</span>(<span class="number">2</span>));</span><br><span class="line"></span><br><span class="line">    % 更新位置</span><br><span class="line">    start_point = start_point - learning_rate * gradient<span class="string">&#x27;;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    % 保存历史路径</span></span><br><span class="line"><span class="string">    path = [path; start_point];</span></span><br><span class="line"><span class="string">end</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">% 绘制函数曲面</span></span><br><span class="line"><span class="string">[x, y] = meshgrid(-3:0.1:3, -3:0.1:3);</span></span><br><span class="line"><span class="string">z = f(x, y);</span></span><br><span class="line"><span class="string">surf(x, y, z);</span></span><br><span class="line"><span class="string">hold on;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">% 绘制梯度下降路径</span></span><br><span class="line"><span class="string">plot3(path(:,1), path(:,2), f(path(:,1), path(:,2)), &#x27;</span>-ro<span class="string">&#x27;, &#x27;</span>LineWidth<span class="string">&#x27;, 2);</span></span><br><span class="line"><span class="string">xlabel(&#x27;</span>x<span class="string">&#x27;);</span></span><br><span class="line"><span class="string">ylabel(&#x27;</span>y<span class="string">&#x27;);</span></span><br><span class="line"><span class="string">zlabel(&#x27;</span><span class="built_in">f</span>(x, y)<span class="string">&#x27;);</span></span><br><span class="line"><span class="string">title(&#x27;</span>函数曲面及梯度下降路径<span class="string">&#x27;);</span></span><br></pre></td></tr></table></figure>
+<p>怎么样，曲面的梯度下降是不是很容易理解呢。而我们的损失函数的自变量是一个n维向量，即1<em>n的矩阵，我们需要对其求偏导，看到这里其数学表达式已经是呼之欲出了，我就不写了嘻嘻。（太麻烦了，还得定义矩阵）。当然神经网络损失函数优化没有上述那么简单，这里还设计一个操作叫做反向传播，这样效率更加高。本质是利用了<em>*链式求导法则</em></em>，这里就不展开细说了。</p>
+<h2 id="小结："><a href="#小结：" class="headerlink" title="小结："></a>小结：</h2><p>无论学习什么，我总是优先想要了解这门学科的本质是什么，我相信只要知道了一个事物的底层架构，利用它时才能更加得心应手。就像本文提及的一些概念，如<strong>神经网络</strong>，他就是一个函数，再如<strong>Sigmoid</strong>，它的本质也只是一个函数，又如<strong>模型训练</strong>，它的本质就是由已知条件求解函数的参数。相信你看完这篇文章应该会稍稍对<strong>神经网络</strong>产生了浅浅的了解。本想讨论<strong>KAN</strong>与<strong>MLP</strong>的区别和联系，以及更加严谨的数学证明，但由于笔者时间和能力都有限，还是放在以后吧。</p>
+
+        
+      </div>
+
+         
+    </div>
+    
+     
+  </div>
+  
+    
+<nav id="article-nav">
+  <a class="article-nav-btn left "
+    
+      href="/2024/12/25/PassFridacheck/"
+      title="过Frida检测的一般思路"
+     >
+    <i class="fa-solid fa-angle-left"></i>
+    <p class="title-text">
+      
+        过Frida检测的一般思路
+        
+    </p>
+  </a>
+  <a class="article-nav-btn right "
+    
+      href="/2024/12/25/MobileMonitor/"
+      title="旧手机改监控"
+     >
+
+    <p class="title-text">
+      
+        旧手机改监控
+        
+    </p>
+    <i class="fa-solid fa-angle-right"></i>
+  </a>
+</nav>
+
+
+  
+</article>
+
+
+
+
+
+    </div>
+    <div id="footer-wrapper">
+      <footer id="footer" style="text-align: center;">
+  <div id="footer-info" class="inner">
+    <p>到底了</p>
+    <p>
+      &copy; 2025 Yuuki
+    </p>
+  </div>
+</footer>
+    </div>
+    <div class="back-to-top-wrapper">
+    <button id="back-to-top-btn" class="back-to-top-btn hide" onclick="topFunction()">
+        <i class="fa-solid fa-angle-up"></i>
+    </button>
+</div>
+
+<script>
+    function topFunction() {
+        window.scroll({ top: 0, behavior: 'smooth' });
+    }
+    let btn = document.getElementById('back-to-top-btn');
+    function scrollFunction() {
+        if (document.body.scrollTop > 600 || document.documentElement.scrollTop > 600) {
+            btn.classList.remove('hide')
+        } else {
+            btn.classList.add('hide')
+        }
+    }
+    window.onscroll = function() {
+        scrollFunction();
+    }
+</script>
+
+  </div>
+  <script src="/js/light-dark-switch.js"></script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"left","width":220,"height":460,"hOffset":0,"vOffset":-100},"mobile":{"show":true},"react":{"opacity":0.85},"log":false});</script></body>
+</html>

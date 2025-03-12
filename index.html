@@ -138,13 +138,18 @@
     <div class="widget">
       <h3 class="widget-title">Categories</h3>
       <div class="category-box">
-            <a class="category-link" href="/categories/Android/">
-                Android
-                <div class="category-count">2</div>
-            </a>
-        
             <a class="category-link" href="/categories/Life/">
                 Life
+                <div class="category-count">1</div>
+            </a>
+        
+            <a class="category-link" href="/categories/Android/">
+                Android
+                <div class="category-count">4</div>
+            </a>
+        
+            <a class="category-link" href="/categories/NeuralNetwork/">
+                NeuralNetwork
                 <div class="category-count">1</div>
             </a>
         </div>
@@ -157,7 +162,7 @@
   <div class="widget-wrap">
     <div class="widget">
       <h3 class="widget-title">Tags</h3>
-      <ul class="widget-tag-list" itemprop="keywords"><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/elf/" rel="tag">elf</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/env-check/" rel="tag">env_check</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/frida/" rel="tag">frida</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/idea/" rel="tag">idea</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/linker/" rel="tag">linker</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/photo/" rel="tag">photo</a></li></ul>
+      <ul class="widget-tag-list" itemprop="keywords"><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/CV/" rel="tag">CV</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/MPL/" rel="tag">MPL</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/elf/" rel="tag">elf</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/env-check/" rel="tag">env_check</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/frida/" rel="tag">frida</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/idea/" rel="tag">idea</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/kernel/" rel="tag">kernel</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/linker/" rel="tag">linker</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/native-camera/" rel="tag">native camera</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/photo/" rel="tag">photo</a></li></ul>
     </div>
   </div>
 
@@ -169,9 +174,14 @@
       <h3 class="widget-title">Archives</h3>
       
       
+        <a class="archive-link" href="/archives/2025/03 ">
+          March 2025 
+          <div class="archive-count">1 </div>
+        </a>
+      
         <a class="archive-link" href="/archives/2024/12 ">
           December 2024 
-          <div class="archive-count">3 </div>
+          <div class="archive-count">5 </div>
         </a>
       
     </div>
@@ -185,6 +195,12 @@
       <h3 class="widget-title">Recent Posts</h3>
       <ul>
         
+          <a class="recent-link" href="/2025/03/12/StructOffset/" title="内核中结构体偏移计算" >
+            <div class="recent-link-text">
+              内核中结构体偏移计算
+            </div>
+          </a>
+        
           <a class="recent-link" href="/2024/12/26/ELFLoador/" title="ElfLoader的实现及原理" >
             <div class="recent-link-text">
               ElfLoader的实现及原理
@@ -197,9 +213,15 @@
             </div>
           </a>
         
-          <a class="recent-link" href="/2024/12/25/HelloBlog/" title="NEW BLOG!!" >
+          <a class="recent-link" href="/2024/12/25/NeuralNetwork/" title="简述神经网络" >
             <div class="recent-link-text">
-              NEW BLOG!!
+              简述神经网络
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2024/12/25/MobileMonitor/" title="旧手机改监控" >
+            <div class="recent-link-text">
+              旧手机改监控
             </div>
           </a>
         
@@ -213,6 +235,79 @@
     </div>
     <div id="content-body">
       
+   
+
+
+<article id="post-StructOffset" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+   
+  <div class="article-inner">
+    <div class="article-main">
+      <header class="article-header">
+        
+<div class="main-title-bar">
+  <div class="main-title-dot"></div>
+  
+    
+      <h1 itemprop="name">
+        <a class="p-name article-title" href="/2025/03/12/StructOffset/">内核中结构体偏移计算</a>
+      </h1>
+    
+  
+</div>
+
+        <div class='meta-info-bar'>
+          <div class="meta-info">
+  <time class="dt-published" datetime="2025-03-12T08:19:10.000Z" itemprop="datePublished">2025-03-12</time>
+</div>
+          <div class="need-seperator meta-info">
+            <div class="meta-cate-flex">
+  
+  <a class="meta-cate-link" href="/categories/Android/">Android</a>
+   
+</div>
+  
+          </div>
+          <div class="wordcount need-seperator meta-info">
+            6.6k words 
+          </div>
+        </div>
+        
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/kernel/" rel="tag">kernel</a></li></ul>
+
+      </header>
+      <div class="e-content article-entry" itemprop="articleBody">
+        
+          <div class="truncate-text">
+            
+              结构体缺失的解决办法1.直接去复制对应内核版本的对应结构体导入这个方法直接一点，但是不同内核的结构体有时候不太一样，而且得一直复制粘贴，还会遇到嵌套结构体的问题，太jb麻烦了，所以除非结构体比较简单，这种方式会好用一些。而且导入时只需要导入到我们最后用到的那个成员就好了。比如：
+12345678910111213141516171819202122232425262728293031323334353637383940414243444546struct file_operations &#123;    struct module *owner;    loff_t (*llseek) (struct file *, loff_t, int);    ssize_t (*read) (struct file *, char __user *, size_t, loff_t *);    ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *);    ssize_t (*read_iter) ...
+            
+          </div>
+        
+      </div>
+
+         
+    </div>
+    
+     
+    <a class="right-panel  non-pic  "
+      
+      href="/2025/03/12/StructOffset/" 
+    >
+       
+      <i class="fa-solid fa-angle-right non-pic"></i>
+       
+    </a>
+     
+  </div>
+  
+</article>
+
+
+
+
+
+
    
 
 
@@ -360,6 +455,166 @@ Frida-Server：16.4.10
     <a class="right-panel  non-pic  "
       
       href="/2024/12/25/PassFridacheck/" 
+    >
+       
+      <i class="fa-solid fa-angle-right non-pic"></i>
+       
+    </a>
+     
+  </div>
+  
+</article>
+
+
+
+
+
+
+   
+
+
+<article id="post-NeuralNetwork" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+   
+  <div class="article-inner">
+    <div class="article-main">
+      <header class="article-header">
+        
+<div class="main-title-bar">
+  <div class="main-title-dot"></div>
+  
+    
+      <h1 itemprop="name">
+        <a class="p-name article-title" href="/2024/12/25/NeuralNetwork/">简述神经网络</a>
+      </h1>
+    
+  
+</div>
+
+        <div class='meta-info-bar'>
+          <div class="meta-info">
+  <time class="dt-published" datetime="2024-12-25T14:39:45.000Z" itemprop="datePublished">2024-12-25</time>
+</div>
+          <div class="need-seperator meta-info">
+            <div class="meta-cate-flex">
+  
+  <a class="meta-cate-link" href="/categories/NeuralNetwork/">NeuralNetwork</a>
+   
+</div>
+  
+          </div>
+          <div class="wordcount need-seperator meta-info">
+            5.6k words 
+          </div>
+        </div>
+        
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/MPL/" rel="tag">MPL</a></li></ul>
+
+      </header>
+      <div class="e-content article-entry" itemprop="articleBody">
+        
+          <div class="truncate-text">
+            
+              基于MPL架构的神经网络
+序言： 最近一个名为KAN的神经网络架突然爆火，所以借此机会了解了一下神经网络相关的概念。并分析KAN与传统架构有哪些不同。本文仅代表笔者的个人理解，不涉及严谨的数学证明，若有错误之处还请指正。
+ 正片： 神经网络好像是一个很高级的词汇，让我们听见就觉得其遥不可及。实际上它本质上就是一个函数。为什么这么说呢，就拿最基本的人脸识别来举例子吧。
+ 人脸识别最基本的流程是什么呢，比如我们宿舍的门禁系统，由摄像头拍摄帧流，把数据流发送给上位机，在上位机中对拍摄到的某帧画面进行标记人脸检测人脸，最终输出结果，开门或是不开门。这个过程可以分为三个步骤：
+
+输入图片
+
+处理图片
+
+输出结果
+
+
+输入 -&gt; 处理 -&gt; 输出，这本质是不是把一个集合里的元素映射到另一个集合呢，这不就是我们初中就开始接触的函数吗？假设我们有一个函数f，f的参数（自变量）是我们输入的图片，直觉上可能会以为f的值就是一个布尔值（是否打开门），可以这么理解，但实际上f是一个浮点数(confident) 它代表置信度或者置信距离，这个数可以用来衡量你是某个人的概率大小。怎么样，原理是不...
+            
+          </div>
+        
+      </div>
+
+         
+    </div>
+    
+     
+    <a class="right-panel  non-pic  "
+      
+      href="/2024/12/25/NeuralNetwork/" 
+    >
+       
+      <i class="fa-solid fa-angle-right non-pic"></i>
+       
+    </a>
+     
+  </div>
+  
+</article>
+
+
+
+
+
+
+   
+
+
+<article id="post-MobileMonitor" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+   
+  <div class="article-inner">
+    <div class="article-main">
+      <header class="article-header">
+        
+<div class="main-title-bar">
+  <div class="main-title-dot"></div>
+  
+    
+      <h1 itemprop="name">
+        <a class="p-name article-title" href="/2024/12/25/MobileMonitor/">旧手机改监控</a>
+      </h1>
+    
+  
+</div>
+
+        <div class='meta-info-bar'>
+          <div class="meta-info">
+  <time class="dt-published" datetime="2024-12-25T14:39:42.000Z" itemprop="datePublished">2024-12-25</time>
+</div>
+          <div class="need-seperator meta-info">
+            <div class="meta-cate-flex">
+  
+  <a class="meta-cate-link" href="/categories/Android/">Android</a>
+   
+</div>
+  
+          </div>
+          <div class="wordcount need-seperator meta-info">
+            38k words 
+          </div>
+        </div>
+        
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/CV/" rel="tag">CV</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/native-camera/" rel="tag">native camera</a></li></ul>
+
+      </header>
+      <div class="e-content article-entry" itemprop="articleBody">
+        
+          <div class="truncate-text">
+            
+              旧手机改监控前言： 暑假赋闲在家，有时候几个伯伯会来喊我有事情，我在自己的房间放歌总是听不见，这让他们很烦恼，于是就想着自己做一个监控，正好让爸爸妈妈也能有空看看家门口。
+由于需要在有人出现的时候对我发送提醒，所以这里需要引入物体识别。这里为了方便，直接用开源的YoloV8了。接下来就是硬件的选择，最先考虑的是Esp32-cam，因为它很便宜，IDF库用起来也不是很麻烦。但是它的算力太垃圾了，传输视频到是可以，但是推理模型就显得力不从心了，而且主流的模型推理库似乎没有适配Risc-V架构的，这样要实现物体检测就必须再搭配一个上位机，显然不符合原本的设计理念。故只好放弃ESP-32cam，从而选择了Android平台。
+Android平台能用的资源很多，更好的CPU/GPU，更丰富的外设，更舒适的开发环境，而且旧手机不用钱，能干很多事情。(我觉得旧手机就是最屌的嵌入式设备，吊打其他开发板，搭载855Soc的手机现在200-300就能买到嘻嘻)
+那么接下来就是实现Camera和Yolo推理
+Camera使用的camera2 api，在so层实现，写完之后写Yolo推理的时候才发现，有...
+            
+          </div>
+        
+      </div>
+
+         
+    </div>
+    
+     
+    <a class="right-panel  non-pic  "
+      
+      href="/2024/12/25/MobileMonitor/" 
     >
        
       <i class="fa-solid fa-angle-right non-pic"></i>

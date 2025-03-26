@@ -138,14 +138,14 @@
     <div class="widget">
       <h3 class="widget-title">Categories</h3>
       <div class="category-box">
-            <a class="category-link" href="/categories/Android/">
-                Android
-                <div class="category-count">4</div>
-            </a>
-        
             <a class="category-link" href="/categories/Life/">
                 Life
                 <div class="category-count">1</div>
+            </a>
+        
+            <a class="category-link" href="/categories/Android/">
+                Android
+                <div class="category-count">5</div>
             </a>
         
             <a class="category-link" href="/categories/NeuralNetwork/">
@@ -162,7 +162,7 @@
   <div class="widget-wrap">
     <div class="widget">
       <h3 class="widget-title">Tags</h3>
-      <ul class="widget-tag-list" itemprop="keywords"><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/CV/" rel="tag">CV</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/MPL/" rel="tag">MPL</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/elf/" rel="tag">elf</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/env-check/" rel="tag">env_check</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/frida/" rel="tag">frida</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/idea/" rel="tag">idea</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/kernel/" rel="tag">kernel</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/linker/" rel="tag">linker</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/native-camera/" rel="tag">native camera</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/photo/" rel="tag">photo</a></li></ul>
+      <ul class="widget-tag-list" itemprop="keywords"><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/CV/" rel="tag">CV</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/MPL/" rel="tag">MPL</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/elf/" rel="tag">elf</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/env-check/" rel="tag">env_check</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/frida/" rel="tag">frida</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/idea/" rel="tag">idea</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/kernel/" rel="tag">kernel</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/linker/" rel="tag">linker</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/native-camera/" rel="tag">native camera</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/photo/" rel="tag">photo</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/systemui/" rel="tag">systemui</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/xposed/" rel="tag">xposed</a></li></ul>
     </div>
   </div>
 
@@ -176,7 +176,7 @@
       
         <a class="archive-link" href="/archives/2025/03 ">
           March 2025 
-          <div class="archive-count">1 </div>
+          <div class="archive-count">2 </div>
         </a>
       
         <a class="archive-link" href="/archives/2024/12 ">
@@ -194,6 +194,12 @@
     <div class="widget">
       <h3 class="widget-title">Recent Posts</h3>
       <ul>
+        
+          <a class="recent-link" href="/2025/03/26/HookSystemUi/" title="定位SystemUi控件的普适方法" >
+            <div class="recent-link-text">
+              定位SystemUi控件的普适方法
+            </div>
+          </a>
         
           <a class="recent-link" href="/2025/03/12/StructOffset/" title="内核中结构体偏移计算" >
             <div class="recent-link-text">
@@ -219,12 +225,6 @@
             </div>
           </a>
         
-          <a class="recent-link" href="/2024/12/25/MobileMonitor/" title="旧手机改监控" >
-            <div class="recent-link-text">
-              旧手机改监控
-            </div>
-          </a>
-        
       </ul>
     </div>
   </div>
@@ -235,6 +235,80 @@
     </div>
     <div id="content-body">
       
+   
+
+
+<article id="post-HookSystemUi" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+   
+  <div class="article-inner">
+    <div class="article-main">
+      <header class="article-header">
+        
+<div class="main-title-bar">
+  <div class="main-title-dot"></div>
+  
+    
+      <h1 itemprop="name">
+        <a class="p-name article-title" href="/2025/03/26/HookSystemUi/">定位SystemUi控件的普适方法</a>
+      </h1>
+    
+  
+</div>
+
+        <div class='meta-info-bar'>
+          <div class="meta-info">
+  <time class="dt-published" datetime="2025-03-26T14:43:52.000Z" itemprop="datePublished">2025-03-26</time>
+</div>
+          <div class="need-seperator meta-info">
+            <div class="meta-cate-flex">
+  
+  <a class="meta-cate-link" href="/categories/Android/">Android</a>
+   
+</div>
+  
+          </div>
+          <div class="wordcount need-seperator meta-info">
+            21k words 
+          </div>
+        </div>
+        
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/systemui/" rel="tag">systemui</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/xposed/" rel="tag">xposed</a></li></ul>
+
+      </header>
+      <div class="e-content article-entry" itemprop="articleBody">
+        
+          <div class="truncate-text">
+            
+              Hook SystemUi0x01: 前言在完善BetterBar的时候，想要快速定位某个控件的位置，搞清楚每个控件的作用。由于不知道系统应用应该如何动态调试，所以之前都是根据类名猜个大概，然后去对应View的onxxx函数里去创建view或者修改该view的背景为红色，这样比较醒目，如果打开手机对应位置看到了红色，说明定位到了。
+但这种方式太低效了，首先Systemui里有很多类是没用的，而且有许多命名相似的类，所以前期开发苦不堪言。好在之前运气不错，记录了许多类对应的功能。但是今天突然想要修改xml里的某个控件的属性：
+123456789101112override fun handleInitPackageResources(resparam: XC_InitPackageResources.InitPackageResourcesParam) &#123;        resparam.res.hookLayout(&quot;com.android.systemui&quot;, &quot;layout&quot;, &quot;control_center&quo...
+            
+          </div>
+        
+      </div>
+
+         
+    </div>
+    
+     
+    <a class="right-panel  non-pic  "
+      
+      href="/2025/03/26/HookSystemUi/" 
+    >
+       
+      <i class="fa-solid fa-angle-right non-pic"></i>
+       
+    </a>
+     
+  </div>
+  
+</article>
+
+
+
+
+
+
    
 
 

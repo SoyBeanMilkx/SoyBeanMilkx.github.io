@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+
+
+<html theme="dark" showBanner="true" hasBanner="true" > 
+<link href="https://cdn.staticfile.org/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet">
+<link href="https://cdn.staticfile.org/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet">
+<link href="https://cdn.staticfile.org/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet">
+<script src="/js/color.global.min.js" ></script>
+<script src="/js/load-settings.js" ></script>
+<head>
+  <meta charset="utf-8">
+  
+  
+  
+
+  
+  <title>Dobby框架使用 | Yuuki</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <link rel="preload" href="/css/fonts/Roboto-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+  <link rel="preload" href="/css/fonts/Roboto-Bold.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+
+  <meta name="description" content="Dobby使用0x01环境配置：环境：wsl2工具：无需额外自己安装首先把Dobby整个项目克隆下来，但是原项目直接编译会爆缺少Cpu.h，我这里用的是老版本的，亲测没问题 正常流程： 1.下载源码 12cd workspacegit clone https:&#x2F;&#x2F;github.com&#x2F;jmpews&#x2F;Dobby.git &#x2F;&#x2F;我下的最新版没法直接编译，原因刚刚说了 2.编译 我这里是要在安卓中使用。参">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Dobby框架使用">
+<meta property="og:url" content="http://example.com/2025/05/16/Dobby/index.html">
+<meta property="og:site_name" content="Yuuki">
+<meta property="og:description" content="Dobby使用0x01环境配置：环境：wsl2工具：无需额外自己安装首先把Dobby整个项目克隆下来，但是原项目直接编译会爆缺少Cpu.h，我这里用的是老版本的，亲测没问题 正常流程： 1.下载源码 12cd workspacegit clone https:&#x2F;&#x2F;github.com&#x2F;jmpews&#x2F;Dobby.git &#x2F;&#x2F;我下的最新版没法直接编译，原因刚刚说了 2.编译 我这里是要在安卓中使用。参">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2025-05-16T14:43:52.000Z">
+<meta property="article:modified_time" content="2025-05-19T09:10:58.927Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="xposed">
+<meta property="article:tag" content="inlinehook">
+<meta property="article:tag" content="native">
+<meta name="twitter:card" content="summary">
+  
+  
+    <link rel="shortcut icon" href="/site_img/icon.jpg">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+  
+  
+    
+<div id="banner" class="">
+  <img src="/site_img/backg.png" itemprop="image">
+  <div id="banner-dim"></div>
+</div>
+ 
+   
+  <div id="main-grid" class="  ">
+    <div id="nav" class=""  >
+      <navbar id="navbar">
+  <nav id="title-nav">
+    <a href="/">
+      <div id="vivia-logo">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+      <div>Yuuki </div>
+    </a>
+  </nav>
+  <nav id="main-nav">
+    
+      <a class="main-nav-link" href="/">Home</a>
+    
+      <a class="main-nav-link" href="/archives">Archives</a>
+    
+      <a class="main-nav-link" href="/about">About</a>
+    
+  </nav>
+  <nav id="sub-nav">
+    <a id="theme-btn" class="nav-icon">
+      <span class="light-mode-icon"><svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M438.5-829.913v-48q0-17.452 11.963-29.476 11.964-12.024 29.326-12.024 17.363 0 29.537 12.024t12.174 29.476v48q0 17.452-11.963 29.476-11.964 12.024-29.326 12.024-17.363 0-29.537-12.024T438.5-829.913Zm0 747.826v-48q0-17.452 11.963-29.476 11.964-12.024 29.326-12.024 17.363 0 29.537 12.024t12.174 29.476v48q0 17.452-11.963 29.476-11.964 12.024-29.326 12.024-17.363 0-29.537-12.024T438.5-82.087ZM877.913-438.5h-48q-17.452 0-29.476-11.963-12.024-11.964-12.024-29.326 0-17.363 12.024-29.537t29.476-12.174h48q17.452 0 29.476 11.963 12.024 11.964 12.024 29.326 0 17.363-12.024 29.537T877.913-438.5Zm-747.826 0h-48q-17.452 0-29.476-11.963-12.024-11.964-12.024-29.326 0-17.363 12.024-29.537T82.087-521.5h48q17.452 0 29.476 11.963 12.024 11.964 12.024 29.326 0 17.363-12.024 29.537T130.087-438.5Zm660.174-290.87-34.239 32q-12.913 12.674-29.565 12.174-16.653-.5-29.327-13.174-12.674-12.673-12.554-28.826.12-16.152 12.794-28.826l33-35q12.913-12.674 30.454-12.674t30.163 12.847q12.709 12.846 12.328 30.826-.38 17.98-13.054 30.653ZM262.63-203.978l-32 34q-12.913 12.674-30.454 12.674t-30.163-12.847q-12.709-12.846-12.328-30.826.38-17.98 13.054-30.653l33.239-31q12.913-12.674 29.565-12.174 16.653.5 29.327 13.174 12.674 12.673 12.554 28.826-.12 16.152-12.794 28.826Zm466.74 33.239-32-33.239q-12.674-12.913-12.174-29.565.5-16.653 13.174-29.327 12.673-12.674 28.826-13.054 16.152-.38 28.826 12.294l35 33q12.674 12.913 12.674 30.454t-12.847 30.163q-12.846 12.709-30.826 12.328-17.98-.38-30.653-13.054ZM203.978-697.37l-34-33q-12.674-12.913-13.174-29.945-.5-17.033 12.174-29.707t31.326-13.293q18.653-.62 31.326 13.054l32 34.239q11.674 12.913 11.174 29.565-.5 16.653-13.174 29.327-12.673 12.674-28.826 12.554-16.152-.12-28.826-12.794ZM480-240q-100 0-170-70t-70-170q0-100 70-170t170-70q100 0 170 70t70 170q0 100-70 170t-170 70Zm-.247-82q65.703 0 111.475-46.272Q637-414.544 637-480.247t-45.525-111.228Q545.95-637 480.247-637t-111.475 45.525Q323-545.95 323-480.247t45.525 111.975Q414.05-322 479.753-322ZM481-481Z"/></svg></span>
+      <span class="dark-mode-icon"><svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M480.239-116.413q-152.63 0-258.228-105.478Q116.413-327.37 116.413-480q0-130.935 77.739-227.435t206.304-125.043q43.022-9.631 63.87 10.869t3.478 62.805q-8.891 22.043-14.315 44.463-5.424 22.42-5.424 46.689 0 91.694 64.326 155.879 64.325 64.186 156.218 64.186 24.369 0 46.978-4.946 22.609-4.945 44.413-14.076 42.826-17.369 62.967 1.142 20.142 18.511 10.511 61.054Q807.174-280 712.63-198.206q-94.543 81.793-232.391 81.793Zm0-95q79.783 0 143.337-40.217 63.554-40.218 95.793-108.283-15.608 4.044-31.097 5.326-15.49 1.283-31.859.805-123.706-4.066-210.777-90.539-87.071-86.473-91.614-212.092-.24-16.369.923-31.978 1.164-15.609 5.446-30.978-67.826 32.478-108.282 96.152Q211.652-559.543 211.652-480q0 111.929 78.329 190.258 78.329 78.329 190.258 78.329ZM466.13-465.891Z"/></svg></span>
+    </a>
+    
+    <div id="nav-menu-btn" class="nav-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M177.37-252.282q-17.453 0-29.477-11.964-12.024-11.963-12.024-29.326t12.024-29.537q12.024-12.174 29.477-12.174h605.26q17.453 0 29.477 11.964 12.024 11.963 12.024 29.326t-12.024 29.537q-12.024 12.174-29.477 12.174H177.37Zm0-186.218q-17.453 0-29.477-11.963-12.024-11.964-12.024-29.326 0-17.363 12.024-29.537T177.37-521.5h605.26q17.453 0 29.477 11.963 12.024 11.964 12.024 29.326 0 17.363-12.024 29.537T782.63-438.5H177.37Zm0-186.217q-17.453 0-29.477-11.964-12.024-11.963-12.024-29.326t12.024-29.537q12.024-12.174 29.477-12.174h605.26q17.453 0 29.477 11.964 12.024 11.963 12.024 29.326t-12.024 29.537q-12.024 12.174-29.477 12.174H177.37Z"/></svg>
+    </div>
+  </nav>
+</navbar>
+<div id="nav-dropdown" class="hidden">
+  <div id="dropdown-link-list">
+    
+      <a class="nav-dropdown-link" href="/">Home</a>
+    
+      <a class="nav-dropdown-link" href="/archives">Archives</a>
+    
+      <a class="nav-dropdown-link" href="/about">About</a>
+    
+     
+    </div>
+</div>
+<script>
+  let dropdownBtn = document.getElementById("nav-menu-btn");
+  let dropdownEle = document.getElementById("nav-dropdown");
+  dropdownBtn.onclick = function() {
+    dropdownEle.classList.toggle("hidden");
+  }
+</script>
+    </div>
+    <div id="sidebar-wrapper">
+      <sidebar id="sidebar">
+  
+    <div class="widget-wrap">
+  <div class="info-card">
+    <div class="avatar">
+      
+        <image src=/site_img/icon.jpg></image>
+      
+      <div class="img-dim"></div>
+    </div>
+    <div class="info">
+      <div class="username">Yuuki </div>
+      <div class="dot"></div>
+      <div class="subtitle">不说话 装高手 </div>
+      <div class="link-list">
+        
+          <a class="link-btn" target="_blank" rel="noopener" href="https://x.com/LiYangv?t=kbZV9-LGilEE-2pg_2GBeQ&s=09" title="Twitter"><i class="fa-brands fa-twitter"></i></a>
+        
+          <a class="link-btn" target="_blank" rel="noopener" href="https://steamcommunity.com/profiles/76561199358468625/" title="Steam"><i class="fa-brands fa-steam"></i></a>
+        
+          <a class="link-btn" target="_blank" rel="noopener" href="https://github.com/SoyBeanMilkx" title="GitHub"><i class="fa-brands fa-github"></i></a>
+         
+      </div>  
+    </div>
+  </div>
+</div>
+
+  
+  <div class="sticky">
+    
+      
+
+
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Categories</h3>
+      <div class="category-box">
+            <a class="category-link" href="/categories/Android/">
+                Android
+                <div class="category-count">7</div>
+            </a>
+        
+            <a class="category-link" href="/categories/Life/">
+                Life
+                <div class="category-count">1</div>
+            </a>
+        
+            <a class="category-link" href="/categories/NeuralNetwork/">
+                NeuralNetwork
+                <div class="category-count">1</div>
+            </a>
+        </div>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Tags</h3>
+      <ul class="widget-tag-list" itemprop="keywords"><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/CV/" rel="tag">CV</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/MPL/" rel="tag">MPL</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/elf/" rel="tag">elf</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/env-check/" rel="tag">env_check</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/frida/" rel="tag">frida</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/idea/" rel="tag">idea</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/inlinehook/" rel="tag">inlinehook</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/kernel/" rel="tag">kernel</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/linker/" rel="tag">linker</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/native/" rel="tag">native</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/native-camera/" rel="tag">native camera</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/photo/" rel="tag">photo</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/systemui/" rel="tag">systemui</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/xposed/" rel="tag">xposed</a></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Archives</h3>
+      
+      
+        <a class="archive-link" href="/archives/2025/05 ">
+          May 2025 
+          <div class="archive-count">1 </div>
+        </a>
+      
+        <a class="archive-link" href="/archives/2025/04 ">
+          April 2025 
+          <div class="archive-count">1 </div>
+        </a>
+      
+        <a class="archive-link" href="/archives/2025/03 ">
+          March 2025 
+          <div class="archive-count">2 </div>
+        </a>
+      
+        <a class="archive-link" href="/archives/2024/12 ">
+          December 2024 
+          <div class="archive-count">5 </div>
+        </a>
+      
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Recent Posts</h3>
+      <ul>
+        
+          <a class="recent-link" href="/2025/05/16/Dobby/" title="Dobby框架使用" >
+            <div class="recent-link-text">
+              Dobby框架使用
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2025/04/16/ReReadLinker/" title="Linker加载so流程" >
+            <div class="recent-link-text">
+              Linker加载so流程
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2025/03/26/HookSystemUi/" title="定位SystemUi控件的普适方法" >
+            <div class="recent-link-text">
+              定位SystemUi控件的普适方法
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2025/03/12/StructOffset/" title="内核中结构体偏移计算" >
+            <div class="recent-link-text">
+              内核中结构体偏移计算
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2024/12/26/ELFLoador/" title="ElfLoader的实现及原理" >
+            <div class="recent-link-text">
+              ElfLoader的实现及原理
+            </div>
+          </a>
+        
+      </ul>
+    </div>
+  </div>
+
+    
+  </div>
+</sidebar>
+    </div>
+    <div id="content-body">
+       
+
+
+<article id="post-Dobby" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  
+    
+   
+  <div class="article-inner">
+    <div class="article-main">
+      <header class="article-header">
+        
+<div class="main-title-bar">
+  <div class="main-title-dot"></div>
+  
+    
+      <h1 class="p-name article-title" itemprop="headline name">
+        Dobby框架使用
+      </h1>
+    
+  
+</div>
+
+        <div class='meta-info-bar'>
+          <div class="meta-info">
+  <time class="dt-published" datetime="2025-05-16T14:43:52.000Z" itemprop="datePublished">2025-05-16</time>
+</div>
+          <div class="need-seperator meta-info">
+            <div class="meta-cate-flex">
+  
+  <a class="meta-cate-link" href="/categories/Android/">Android</a>
+   
+</div>
+  
+          </div>
+          <div class="wordcount need-seperator meta-info">
+            7.6k words 
+          </div>
+        </div>
+        
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/inlinehook/" rel="tag">inlinehook</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/native/" rel="tag">native</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/xposed/" rel="tag">xposed</a></li></ul>
+
+      </header>
+      <div class="e-content article-entry" itemprop="articleBody">
+        
+          <h1 id="Dobby使用"><a href="#Dobby使用" class="headerlink" title="Dobby使用"></a>Dobby使用</h1><h2 id="0x01环境配置："><a href="#0x01环境配置：" class="headerlink" title="0x01环境配置："></a>0x01环境配置：</h2><h4 id="环境：wsl2"><a href="#环境：wsl2" class="headerlink" title="环境：wsl2"></a>环境：wsl2</h4><h4 id="工具：无需额外自己安装"><a href="#工具：无需额外自己安装" class="headerlink" title="工具：无需额外自己安装"></a>工具：无需额外自己安装</h4><p>首先把Dobby整个项目克隆下来，但是原项目直接编译会爆缺少Cpu.h，我这里用的是老版本的，亲测没问题</p>
+<p>正常流程：</p>
+<p>1.下载源码</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> workspace</span><br><span class="line">git <span class="built_in">clone</span> https://github.com/jmpews/Dobby.git //我下的最新版没法直接编译，原因刚刚说了</span><br></pre></td></tr></table></figure>
+<p>2.编译</p>
+<p>我这里是要在安卓中使用。参考<a target="_blank" rel="noopener" href="https://github.com/jmpews/Dobby/blob/master/docs/compile.md">compile.md</a></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># prepare and download cmake/llvm/ndk</span></span><br><span class="line">sh scripts/setup_linux_cross_compile.sh</span><br><span class="line">python3 scripts/platform_builder.py --platform=android --<span class="built_in">arch</span>=all --cmake_dir=<span class="variable">$HOME</span>/opt/cmake-3.25.2 --llvm_dir=<span class="variable">$HOME</span>/opt/llvm-15.0.6 --android_ndk_dir=<span class="variable">$HOME</span>/opt/ndk-r25b</span><br></pre></td></tr></table></figure>
+<p>执行第一个脚本之后它会自动下载特定版本的工具链，然后执行py脚本进行编译。编译的文件在<code>./workspace/Dobby/build</code>下，包含各个架构的<code>.a</code>和<code>.so</code>文件</p>
+<p>这里我们需要用到静态库(.a文件)，和我们的so一起链接。</p>
+<p>在Android Studio里新建native app项目，在<code>/app/src/main/cpp/</code>下创建<strong>Dobby</strong>文件夹，当然叫啥都随你，我习惯这样啊，接着把刚刚编译生成的各个架构的.a文件复制进去，接着改一下cmake就行了</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">cmake_minimum_required</span>(VERSION <span class="number">3.22</span>.<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">project</span>(<span class="string">&quot;fakelocation&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 添加头文件路径（dobby.h 所在目录）</span></span><br><span class="line"><span class="keyword">include_directories</span>(<span class="variable">$&#123;CMAKE_CURRENT_SOURCE_DIR&#125;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 指定 libdobby.a 静态库路径</span></span><br><span class="line"><span class="keyword">set</span>(LIBDOBBY_PATH <span class="variable">$&#123;CMAKE_CURRENT_SOURCE_DIR&#125;</span>/Dobby/<span class="variable">$&#123;CMAKE_ANDROID_ARCH_ABI&#125;</span>/libdobby.a)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 添加共享库目标</span></span><br><span class="line"><span class="keyword">add_library</span>(<span class="variable">$&#123;CMAKE_PROJECT_NAME&#125;</span> SHARED</span><br><span class="line">        yuuki.cpp)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 链接库：libdobby.a、android、log</span></span><br><span class="line"><span class="keyword">target_link_libraries</span>(<span class="variable">$&#123;CMAKE_PROJECT_NAME&#125;</span></span><br><span class="line">        <span class="variable">$&#123;LIBDOBBY_PATH&#125;</span></span><br><span class="line">        android</span><br><span class="line">        log)</span><br></pre></td></tr></table></figure>
+<p>然后需要把dobby项目里的<code>dobby.h</code>拷贝到自己的项目里，到这就差不多了，可以跑一个简单的demo试试看</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;jni.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;android/log.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;dlfcn.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;dobby.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LOG_TAG <span class="string">&quot;FakeLocation&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 原始函数：返回固定值</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">get_number</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;Original get_number called&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">42</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Hook 替换函数</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">hooked_get_number</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;Hooked get_number called&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">100</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// JNI 接口：测试 Hook</span></span><br><span class="line"><span class="keyword">extern</span> <span class="string">&quot;C&quot;</span> <span class="function">JNIEXPORT jstring JNICALL</span></span><br><span class="line"><span class="function"><span class="title">Java_com_yuuki_fakelocation_MainActivity_stringFromJNI</span><span class="params">(JNIEnv* env, jobject <span class="comment">/* this */</span>)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;Entering stringFromJNI&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 调用原始函数</span></span><br><span class="line">    <span class="type">int</span> original_result = <span class="built_in">get_number</span>();</span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;Original get_number result: %d&quot;</span>, original_result);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 检查 Dobby 符号是否可用</span></span><br><span class="line">    <span class="type">void</span>* dobby_hook = <span class="built_in">dlsym</span>(RTLD_DEFAULT, <span class="string">&quot;DobbyHook&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span> (!dobby_hook) &#123;</span><br><span class="line">        <span class="built_in">LOGE</span>(<span class="string">&quot;Failed to find DobbyHook symbol&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> env-&gt;<span class="built_in">NewStringUTF</span>(<span class="string">&quot;DobbyHook symbol not found&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;DobbyHook symbol found at %p&quot;</span>, dobby_hook);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 执行 Hook</span></span><br><span class="line">    <span class="type">void</span>* orig_func = (<span class="type">void</span>*)get_number;</span><br><span class="line">    <span class="type">void</span>* hook_func = (<span class="type">void</span>*)hooked_get_number;</span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;Attempting to hook get_number at %p with %p&quot;</span>, orig_func, hook_func);</span><br><span class="line">    <span class="type">int</span> result = <span class="built_in">DobbyHook</span>(orig_func, hook_func, <span class="literal">nullptr</span>);</span><br><span class="line">    <span class="keyword">if</span> (result == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">LOGD</span>(<span class="string">&quot;DobbyHook succeeded&quot;</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="built_in">LOGE</span>(<span class="string">&quot;DobbyHook failed with code: %d&quot;</span>, result);</span><br><span class="line">        <span class="type">char</span> error_msg[<span class="number">128</span>];</span><br><span class="line">        <span class="built_in">snprintf</span>(error_msg, <span class="built_in">sizeof</span>(error_msg), <span class="string">&quot;Hook failed: %d&quot;</span>, result);</span><br><span class="line">        <span class="keyword">return</span> env-&gt;<span class="built_in">NewStringUTF</span>(error_msg);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 调用 Hook 后的函数</span></span><br><span class="line">    <span class="type">int</span> hooked_result = <span class="built_in">get_number</span>();</span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;Hooked get_number result: %d&quot;</span>, hooked_result);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 返回结果</span></span><br><span class="line">    <span class="type">char</span> buffer[<span class="number">128</span>];</span><br><span class="line">    <span class="built_in">snprintf</span>(buffer, <span class="built_in">sizeof</span>(buffer), <span class="string">&quot;Original: %d, Hooked: %d&quot;</span>, original_result, hooked_result);</span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;Returning: %s&quot;</span>, buffer);</span><br><span class="line">    <span class="keyword">return</span> env-&gt;<span class="built_in">NewStringUTF</span>(buffer);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.yuuki.fakelocation;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> android.app.Activity;</span><br><span class="line"><span class="keyword">import</span> android.os.Bundle;</span><br><span class="line"><span class="keyword">import</span> android.view.View;</span><br><span class="line"><span class="keyword">import</span> android.widget.TextView;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> com.yuuki.fakelocation.utils.Miscellaneous;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">MainActivity</span> <span class="keyword">extends</span> <span class="title class_">Activity</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> &#123;</span><br><span class="line">        System.loadLibrary(<span class="string">&quot;fakelocation&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">protected</span> <span class="keyword">void</span> <span class="title function_">onCreate</span><span class="params">(Bundle savedInstanceState)</span> &#123;</span><br><span class="line">        <span class="built_in">super</span>.onCreate(savedInstanceState);</span><br><span class="line">        Miscellaneous.setImmersiveStatusBar(<span class="built_in">this</span>);</span><br><span class="line">        setContentView(R.layout.activity_main);</span><br><span class="line">        <span class="type">View</span> <span class="variable">rootView</span> <span class="operator">=</span> findViewById(R.id.main);</span><br><span class="line">        Miscellaneous.setViewTopPadding(rootView, <span class="built_in">this</span>);</span><br><span class="line"></span><br><span class="line">        <span class="type">TextView</span> <span class="variable">tv</span> <span class="operator">=</span> findViewById(R.id.sample_text);</span><br><span class="line">        tv.setText(stringFromJNI());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">native</span> String <span class="title function_">stringFromJNI</span><span class="params">()</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看看是否输出了预期的结果</p>
+<p>但是通常我们写xposed模块不会这么写，因为这样你的hook是会影响自身的，所以我喜欢把hook的逻辑和自己jni的逻辑分别打包成两个so</p>
+<h2 id="0x02API介绍："><a href="#0x02API介绍：" class="headerlink" title="0x02API介绍："></a>0x02API介绍：</h2><p>其实能用的Api都在dobby.h里写好了，我们来看看这个头文件里写了啥吧</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">ifndef</span> dobby_h</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> dobby_h</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> __cplusplus</span></span><br><span class="line"><span class="keyword">extern</span> <span class="string">&quot;C&quot;</span> &#123;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdbool.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdint.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="type">uintptr_t</span> <span class="type">addr_t</span>;</span><br><span class="line"><span class="keyword">typedef</span> <span class="type">uint32_t</span> <span class="type">addr32_t</span>;</span><br><span class="line"><span class="keyword">typedef</span> <span class="type">uint64_t</span> <span class="type">addr64_t</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="type">void</span> *<span class="type">dobby_dummy_func_t</span>;</span><br><span class="line"><span class="keyword">typedef</span> <span class="type">void</span> *<span class="type">asm_func_t</span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> defined(__arm__)</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">  <span class="type">uint32_t</span> dummy_0;</span><br><span class="line">  <span class="type">uint32_t</span> dummy_1;</span><br><span class="line"></span><br><span class="line">  <span class="type">uint32_t</span> dummy_2;</span><br><span class="line">  <span class="type">uint32_t</span> sp;</span><br><span class="line"></span><br><span class="line">  <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">    <span class="type">uint32_t</span> r[<span class="number">13</span>];</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">      <span class="type">uint32_t</span> r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12;</span><br><span class="line">    &#125; regs;</span><br><span class="line">  &#125; general;</span><br><span class="line"></span><br><span class="line">  <span class="type">uint32_t</span> lr;</span><br><span class="line">&#125; DobbyRegisterContext;</span><br><span class="line"><span class="meta">#<span class="keyword">elif</span> defined(__arm64__) || defined(__aarch64__)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> ARM64_TMP_REG_NDX_0 17</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">union</span> _<span class="title">FPReg</span> &#123;</span></span><br><span class="line">  <span class="type">__int128_t</span> q;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">    <span class="type">double</span> d1;</span><br><span class="line">    <span class="type">double</span> d2;</span><br><span class="line">  &#125; d;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">    <span class="type">float</span> f1;</span><br><span class="line">    <span class="type">float</span> f2;</span><br><span class="line">    <span class="type">float</span> f3;</span><br><span class="line">    <span class="type">float</span> f4;</span><br><span class="line">  &#125; f;</span><br><span class="line">&#125; FPReg;</span><br><span class="line"></span><br><span class="line"><span class="comment">// register context</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">  <span class="type">uint64_t</span> dmmpy_0; <span class="comment">// dummy placeholder</span></span><br><span class="line">  <span class="type">uint64_t</span> sp;</span><br><span class="line"></span><br><span class="line">  <span class="type">uint64_t</span> dmmpy_1; <span class="comment">// dummy placeholder</span></span><br><span class="line">  <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">    <span class="type">uint64_t</span> x[<span class="number">29</span>];</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">      <span class="type">uint64_t</span> x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21, x22,</span><br><span class="line">          x23, x24, x25, x26, x27, x28;</span><br><span class="line">    &#125; regs;</span><br><span class="line">  &#125; general;</span><br><span class="line"></span><br><span class="line">  <span class="type">uint64_t</span> fp;</span><br><span class="line">  <span class="type">uint64_t</span> lr;</span><br><span class="line"></span><br><span class="line">  <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">    FPReg q[<span class="number">32</span>];</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">      FPReg q0, q1, q2, q3, q4, q5, q6, q7;</span><br><span class="line">      <span class="comment">// [!!! READ ME !!!]</span></span><br><span class="line">      <span class="comment">// for Arm64, can&#x27;t access q8 - q31, unless you enable full floating-point register pack</span></span><br><span class="line">      FPReg q8, q9, q10, q11, q12, q13, q14, q15, q16, q17, q18, q19, q20, q21, q22, q23, q24, q25, q26, q27, q28, q29,</span><br><span class="line">          q30, q31;</span><br><span class="line">    &#125; regs;</span><br><span class="line">  &#125; floating;</span><br><span class="line">&#125; DobbyRegisterContext;</span><br><span class="line"><span class="meta">#<span class="keyword">elif</span> defined(_M_IX86) || defined(__i386__)</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">RegisterContext</span> &#123;</span></span><br><span class="line">  <span class="type">uint32_t</span> dummy_0;</span><br><span class="line">  <span class="type">uint32_t</span> esp;</span><br><span class="line"></span><br><span class="line">  <span class="type">uint32_t</span> dummy_1;</span><br><span class="line">  <span class="type">uint32_t</span> flags;</span><br><span class="line"></span><br><span class="line">  <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">      <span class="type">uint32_t</span> eax, ebx, ecx, edx, ebp, esp, edi, esi;</span><br><span class="line">    &#125; regs;</span><br><span class="line">  &#125; general;</span><br><span class="line"></span><br><span class="line">&#125; DobbyRegisterContext;</span><br><span class="line"><span class="meta">#<span class="keyword">elif</span> defined(_M_X64) || defined(__x86_64__)</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">  <span class="type">uint64_t</span> dummy_0;</span><br><span class="line">  <span class="type">uint64_t</span> rsp;</span><br><span class="line"></span><br><span class="line">  <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">      <span class="type">uint64_t</span> rax, rbx, rcx, rdx, rbp, rsp, rdi, rsi, r8, r9, r10, r11, r12, r13, r14, r15;</span><br><span class="line">    &#125; regs;</span><br><span class="line">  &#125; general;</span><br><span class="line"></span><br><span class="line">  <span class="type">uint64_t</span> dummy_1;</span><br><span class="line">  <span class="type">uint64_t</span> flags;</span><br><span class="line">&#125; DobbyRegisterContext;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> install_hook_name(name, fn_ret_t, fn_args_t...)                                                                \</span></span><br><span class="line"><span class="meta">  static fn_ret_t fake_##name(fn_args_t);                                                                              \</span></span><br><span class="line"><span class="meta">  static fn_ret_t (*orig_##name)(fn_args_t);                                                                           \</span></span><br><span class="line"><span class="meta">  <span class="comment">/* __attribute__((constructor)) */</span> static void install_hook_##name(void *sym_addr) &#123;                                 \</span></span><br><span class="line"><span class="meta">    DobbyHook(sym_addr, (dobby_dummy_func_t)fake_##name, (dobby_dummy_func_t *)&amp;orig_##name);                          \</span></span><br><span class="line"><span class="meta">    return;                                                                                                            \</span></span><br><span class="line"><span class="meta">  &#125;                                                                                                                    \</span></span><br><span class="line"><span class="meta">  fn_ret_t fake_##name(fn_args_t)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// memory code patch</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">DobbyCodePatch</span><span class="params">(<span class="type">void</span> *address, <span class="type">uint8_t</span> *buffer, <span class="type">uint32_t</span> buffer_size)</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// function inline hook</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">DobbyHook</span><span class="params">(<span class="type">void</span> *address, <span class="type">dobby_dummy_func_t</span> replace_func, <span class="type">dobby_dummy_func_t</span> *origin_func)</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// dynamic binary instruction instrument</span></span><br><span class="line"><span class="comment">// for Arm64, can&#x27;t access q8 - q31, unless enable full floating-point register pack</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="title function_">void</span> <span class="params">(*<span class="type">dobby_instrument_callback_t</span>)</span><span class="params">(<span class="type">void</span> *address, DobbyRegisterContext *ctx)</span>;</span><br><span class="line"><span class="type">int</span> <span class="title function_">DobbyInstrument</span><span class="params">(<span class="type">void</span> *address, <span class="type">dobby_instrument_callback_t</span> pre_handler)</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// destroy and restore code patch</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">DobbyDestroy</span><span class="params">(<span class="type">void</span> *address)</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">const</span> <span class="type">char</span> *<span class="title function_">DobbyGetVersion</span><span class="params">()</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// symbol resolver</span></span><br><span class="line"><span class="type">void</span> *<span class="title function_">DobbySymbolResolver</span><span class="params">(<span class="type">const</span> <span class="type">char</span> *image_name, <span class="type">const</span> <span class="type">char</span> *symbol_name)</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// import table replace</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">DobbyImportTableReplace</span><span class="params">(<span class="type">char</span> *image_name, <span class="type">char</span> *symbol_name, <span class="type">dobby_dummy_func_t</span> fake_func,</span></span><br><span class="line"><span class="params">                            <span class="type">dobby_dummy_func_t</span> *orig_func)</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// for arm, Arm64, try use b xxx instead of ldr absolute indirect branch</span></span><br><span class="line"><span class="comment">// for x86, x64, always use absolute indirect jump</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">dobby_enable_near_branch_trampoline</span><span class="params">()</span>;</span><br><span class="line"><span class="type">void</span> <span class="title function_">dobby_disable_near_branch_trampoline</span><span class="params">()</span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> __cplusplus</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+<p>常用的就底下那几个，而且dobby提供的<strong>DobbySymbolResolver</strong>只能查找导出符号，所以一般不用，通常都会用elf_utils去查找符号，而且<strong>DobbyHook</strong>使用之前需要先修改内存段权限，不加的话似乎会无限循环调用，可能只有我这个版本会。</p>
+
+        
+      </div>
+
+         
+    </div>
+    
+     
+  </div>
+  
+    
+<nav id="article-nav">
+  <a class="article-nav-btn left  disabled "
+     >
+    <i class="fa-solid fa-angle-left"></i>
+    <p class="title-text">
+        
+    </p>
+  </a>
+  <a class="article-nav-btn right "
+    
+      href="/2025/04/16/ReReadLinker/"
+      title="Linker加载so流程"
+     >
+
+    <p class="title-text">
+      
+        Linker加载so流程
+        
+    </p>
+    <i class="fa-solid fa-angle-right"></i>
+  </a>
+</nav>
+
+
+  
+</article>
+
+
+
+
+
+    </div>
+    <div id="footer-wrapper">
+      <footer id="footer" style="text-align: center;">
+  <div id="footer-info" class="inner">
+    <p>到底了</p>
+    <p>
+      &copy; 2025 Yuuki
+    </p>
+  </div>
+</footer>
+    </div>
+    <div class="back-to-top-wrapper">
+    <button id="back-to-top-btn" class="back-to-top-btn hide" onclick="topFunction()">
+        <i class="fa-solid fa-angle-up"></i>
+    </button>
+</div>
+
+<script>
+    function topFunction() {
+        window.scroll({ top: 0, behavior: 'smooth' });
+    }
+    let btn = document.getElementById('back-to-top-btn');
+    function scrollFunction() {
+        if (document.body.scrollTop > 600 || document.documentElement.scrollTop > 600) {
+            btn.classList.remove('hide')
+        } else {
+            btn.classList.add('hide')
+        }
+    }
+    window.onscroll = function() {
+        scrollFunction();
+    }
+</script>
+
+  </div>
+  <script src="/js/light-dark-switch.js"></script>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"left","width":220,"height":460,"hOffset":0,"vOffset":-100},"mobile":{"show":true},"react":{"opacity":0.85},"log":false});</script></body>
+</html>

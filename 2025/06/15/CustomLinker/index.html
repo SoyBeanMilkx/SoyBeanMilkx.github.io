@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+
+
+<html theme="dark" showBanner="true" hasBanner="true" > 
+<link href="https://cdn.staticfile.org/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet">
+<link href="https://cdn.staticfile.org/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet">
+<link href="https://cdn.staticfile.org/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet">
+<script src="/js/color.global.min.js" ></script>
+<script src="/js/load-settings.js" ></script>
+<head>
+  <meta charset="utf-8">
+  
+  
+  
+
+  
+  <title>自定义Linker与SO加固 | Yuuki</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <link rel="preload" href="/css/fonts/Roboto-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+  <link rel="preload" href="/css/fonts/Roboto-Bold.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+
+  <meta name="description" content="自定义Linker与SO加固0x01 前言在研究360加固方案时，我发现其采用了一种独特的保护机制：在主SO文件内部嵌套了另一个SO文件，相当于为主SO添加了一层保护壳。这种技术实现引起了我的兴趣，经过深入研究，整理出本文，分享自定义Linker的实现原理及SO加固技术 0x02 Linker源码分析PS：这部分有点长，如果你只想看怎么实现的，可以直接跳到总结核心代码解析（只贴关键部分，不然太长了">
+<meta property="og:type" content="article">
+<meta property="og:title" content="自定义Linker与SO加固">
+<meta property="og:url" content="http://example.com/2025/06/15/CustomLinker/index.html">
+<meta property="og:site_name" content="Yuuki">
+<meta property="og:description" content="自定义Linker与SO加固0x01 前言在研究360加固方案时，我发现其采用了一种独特的保护机制：在主SO文件内部嵌套了另一个SO文件，相当于为主SO添加了一层保护壳。这种技术实现引起了我的兴趣，经过深入研究，整理出本文，分享自定义Linker的实现原理及SO加固技术 0x02 Linker源码分析PS：这部分有点长，如果你只想看怎么实现的，可以直接跳到总结核心代码解析（只贴关键部分，不然太长了">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/2025/06/15/CustomLinker/Relationship.png">
+<meta property="article:published_time" content="2025-06-15T05:14:10.000Z">
+<meta property="article:modified_time" content="2025-06-15T04:03:05.430Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="linker">
+<meta property="article:tag" content="elf">
+<meta property="article:tag" content="encryption">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2025/06/15/CustomLinker/Relationship.png">
+  
+  
+    <link rel="shortcut icon" href="/site_img/icon.jpg">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+  
+  
+    
+<div id="banner" class="">
+  <img src="/site_img/backg.png" itemprop="image">
+  <div id="banner-dim"></div>
+</div>
+ 
+   
+  <div id="main-grid" class="  ">
+    <div id="nav" class=""  >
+      <navbar id="navbar">
+  <nav id="title-nav">
+    <a href="/">
+      <div id="vivia-logo">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+      <div>Yuuki </div>
+    </a>
+  </nav>
+  <nav id="main-nav">
+    
+      <a class="main-nav-link" href="/">Home</a>
+    
+      <a class="main-nav-link" href="/archives">Archives</a>
+    
+      <a class="main-nav-link" href="/about">About</a>
+    
+  </nav>
+  <nav id="sub-nav">
+    <a id="theme-btn" class="nav-icon">
+      <span class="light-mode-icon"><svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M438.5-829.913v-48q0-17.452 11.963-29.476 11.964-12.024 29.326-12.024 17.363 0 29.537 12.024t12.174 29.476v48q0 17.452-11.963 29.476-11.964 12.024-29.326 12.024-17.363 0-29.537-12.024T438.5-829.913Zm0 747.826v-48q0-17.452 11.963-29.476 11.964-12.024 29.326-12.024 17.363 0 29.537 12.024t12.174 29.476v48q0 17.452-11.963 29.476-11.964 12.024-29.326 12.024-17.363 0-29.537-12.024T438.5-82.087ZM877.913-438.5h-48q-17.452 0-29.476-11.963-12.024-11.964-12.024-29.326 0-17.363 12.024-29.537t29.476-12.174h48q17.452 0 29.476 11.963 12.024 11.964 12.024 29.326 0 17.363-12.024 29.537T877.913-438.5Zm-747.826 0h-48q-17.452 0-29.476-11.963-12.024-11.964-12.024-29.326 0-17.363 12.024-29.537T82.087-521.5h48q17.452 0 29.476 11.963 12.024 11.964 12.024 29.326 0 17.363-12.024 29.537T130.087-438.5Zm660.174-290.87-34.239 32q-12.913 12.674-29.565 12.174-16.653-.5-29.327-13.174-12.674-12.673-12.554-28.826.12-16.152 12.794-28.826l33-35q12.913-12.674 30.454-12.674t30.163 12.847q12.709 12.846 12.328 30.826-.38 17.98-13.054 30.653ZM262.63-203.978l-32 34q-12.913 12.674-30.454 12.674t-30.163-12.847q-12.709-12.846-12.328-30.826.38-17.98 13.054-30.653l33.239-31q12.913-12.674 29.565-12.174 16.653.5 29.327 13.174 12.674 12.673 12.554 28.826-.12 16.152-12.794 28.826Zm466.74 33.239-32-33.239q-12.674-12.913-12.174-29.565.5-16.653 13.174-29.327 12.673-12.674 28.826-13.054 16.152-.38 28.826 12.294l35 33q12.674 12.913 12.674 30.454t-12.847 30.163q-12.846 12.709-30.826 12.328-17.98-.38-30.653-13.054ZM203.978-697.37l-34-33q-12.674-12.913-13.174-29.945-.5-17.033 12.174-29.707t31.326-13.293q18.653-.62 31.326 13.054l32 34.239q11.674 12.913 11.174 29.565-.5 16.653-13.174 29.327-12.673 12.674-28.826 12.554-16.152-.12-28.826-12.794ZM480-240q-100 0-170-70t-70-170q0-100 70-170t170-70q100 0 170 70t70 170q0 100-70 170t-170 70Zm-.247-82q65.703 0 111.475-46.272Q637-414.544 637-480.247t-45.525-111.228Q545.95-637 480.247-637t-111.475 45.525Q323-545.95 323-480.247t45.525 111.975Q414.05-322 479.753-322ZM481-481Z"/></svg></span>
+      <span class="dark-mode-icon"><svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M480.239-116.413q-152.63 0-258.228-105.478Q116.413-327.37 116.413-480q0-130.935 77.739-227.435t206.304-125.043q43.022-9.631 63.87 10.869t3.478 62.805q-8.891 22.043-14.315 44.463-5.424 22.42-5.424 46.689 0 91.694 64.326 155.879 64.325 64.186 156.218 64.186 24.369 0 46.978-4.946 22.609-4.945 44.413-14.076 42.826-17.369 62.967 1.142 20.142 18.511 10.511 61.054Q807.174-280 712.63-198.206q-94.543 81.793-232.391 81.793Zm0-95q79.783 0 143.337-40.217 63.554-40.218 95.793-108.283-15.608 4.044-31.097 5.326-15.49 1.283-31.859.805-123.706-4.066-210.777-90.539-87.071-86.473-91.614-212.092-.24-16.369.923-31.978 1.164-15.609 5.446-30.978-67.826 32.478-108.282 96.152Q211.652-559.543 211.652-480q0 111.929 78.329 190.258 78.329 78.329 190.258 78.329ZM466.13-465.891Z"/></svg></span>
+    </a>
+    
+    <div id="nav-menu-btn" class="nav-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M177.37-252.282q-17.453 0-29.477-11.964-12.024-11.963-12.024-29.326t12.024-29.537q12.024-12.174 29.477-12.174h605.26q17.453 0 29.477 11.964 12.024 11.963 12.024 29.326t-12.024 29.537q-12.024 12.174-29.477 12.174H177.37Zm0-186.218q-17.453 0-29.477-11.963-12.024-11.964-12.024-29.326 0-17.363 12.024-29.537T177.37-521.5h605.26q17.453 0 29.477 11.963 12.024 11.964 12.024 29.326 0 17.363-12.024 29.537T782.63-438.5H177.37Zm0-186.217q-17.453 0-29.477-11.964-12.024-11.963-12.024-29.326t12.024-29.537q12.024-12.174 29.477-12.174h605.26q17.453 0 29.477 11.964 12.024 11.963 12.024 29.326t-12.024 29.537q-12.024 12.174-29.477 12.174H177.37Z"/></svg>
+    </div>
+  </nav>
+</navbar>
+<div id="nav-dropdown" class="hidden">
+  <div id="dropdown-link-list">
+    
+      <a class="nav-dropdown-link" href="/">Home</a>
+    
+      <a class="nav-dropdown-link" href="/archives">Archives</a>
+    
+      <a class="nav-dropdown-link" href="/about">About</a>
+    
+     
+    </div>
+</div>
+<script>
+  let dropdownBtn = document.getElementById("nav-menu-btn");
+  let dropdownEle = document.getElementById("nav-dropdown");
+  dropdownBtn.onclick = function() {
+    dropdownEle.classList.toggle("hidden");
+  }
+</script>
+    </div>
+    <div id="sidebar-wrapper">
+      <sidebar id="sidebar">
+  
+    <div class="widget-wrap">
+  <div class="info-card">
+    <div class="avatar">
+      
+        <image src=/site_img/icon.jpg></image>
+      
+      <div class="img-dim"></div>
+    </div>
+    <div class="info">
+      <div class="username">Yuuki </div>
+      <div class="dot"></div>
+      <div class="subtitle">不说话 装高手 </div>
+      <div class="link-list">
+        
+          <a class="link-btn" target="_blank" rel="noopener" href="https://x.com/LiYangv?t=kbZV9-LGilEE-2pg_2GBeQ&s=09" title="Twitter"><i class="fa-brands fa-twitter"></i></a>
+        
+          <a class="link-btn" target="_blank" rel="noopener" href="https://steamcommunity.com/profiles/76561199358468625/" title="Steam"><i class="fa-brands fa-steam"></i></a>
+        
+          <a class="link-btn" target="_blank" rel="noopener" href="https://github.com/SoyBeanMilkx" title="GitHub"><i class="fa-brands fa-github"></i></a>
+         
+      </div>  
+    </div>
+  </div>
+</div>
+
+  
+  <div class="sticky">
+    
+      
+
+
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Categories</h3>
+      <div class="category-box">
+            <a class="category-link" href="/categories/Android/">
+                Android
+                <div class="category-count">8</div>
+            </a>
+        
+            <a class="category-link" href="/categories/Life/">
+                Life
+                <div class="category-count">1</div>
+            </a>
+        
+            <a class="category-link" href="/categories/NeuralNetwork/">
+                NeuralNetwork
+                <div class="category-count">1</div>
+            </a>
+        </div>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Tags</h3>
+      <ul class="widget-tag-list" itemprop="keywords"><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/CV/" rel="tag">CV</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/MPL/" rel="tag">MPL</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/elf/" rel="tag">elf</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/encryption/" rel="tag">encryption</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/env-check/" rel="tag">env_check</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/frida/" rel="tag">frida</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/idea/" rel="tag">idea</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/inlinehook/" rel="tag">inlinehook</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/kernel/" rel="tag">kernel</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/linker/" rel="tag">linker</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/native/" rel="tag">native</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/native-camera/" rel="tag">native camera</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/photo/" rel="tag">photo</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/systemui/" rel="tag">systemui</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/xposed/" rel="tag">xposed</a></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Archives</h3>
+      
+      
+        <a class="archive-link" href="/archives/2025/06 ">
+          June 2025 
+          <div class="archive-count">1 </div>
+        </a>
+      
+        <a class="archive-link" href="/archives/2025/05 ">
+          May 2025 
+          <div class="archive-count">1 </div>
+        </a>
+      
+        <a class="archive-link" href="/archives/2025/04 ">
+          April 2025 
+          <div class="archive-count">1 </div>
+        </a>
+      
+        <a class="archive-link" href="/archives/2025/03 ">
+          March 2025 
+          <div class="archive-count">2 </div>
+        </a>
+      
+        <a class="archive-link" href="/archives/2024/12 ">
+          December 2024 
+          <div class="archive-count">5 </div>
+        </a>
+      
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Recent Posts</h3>
+      <ul>
+        
+          <a class="recent-link" href="/2025/06/15/CustomLinker/" title="自定义Linker与SO加固" >
+            <div class="recent-link-text">
+              自定义Linker与SO加固
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2025/05/16/Dobby/" title="Dobby框架使用" >
+            <div class="recent-link-text">
+              Dobby框架使用
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2025/04/16/ReReadLinker/" title="Linker加载so流程" >
+            <div class="recent-link-text">
+              Linker加载so流程
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2025/03/26/HookSystemUi/" title="定位SystemUi控件的普适方法" >
+            <div class="recent-link-text">
+              定位SystemUi控件的普适方法
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2025/03/12/StructOffset/" title="内核中结构体偏移计算" >
+            <div class="recent-link-text">
+              内核中结构体偏移计算
+            </div>
+          </a>
+        
+      </ul>
+    </div>
+  </div>
+
+    
+  </div>
+</sidebar>
+    </div>
+    <div id="content-body">
+       
+
+
+<article id="post-CustomLinker" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  
+    
+   
+  <div class="article-inner">
+    <div class="article-main">
+      <header class="article-header">
+        
+<div class="main-title-bar">
+  <div class="main-title-dot"></div>
+  
+    
+      <h1 class="p-name article-title" itemprop="headline name">
+        自定义Linker与SO加固
+      </h1>
+    
+  
+</div>
+
+        <div class='meta-info-bar'>
+          <div class="meta-info">
+  <time class="dt-published" datetime="2025-06-15T05:14:10.000Z" itemprop="datePublished">2025-06-15</time>
+</div>
+          <div class="need-seperator meta-info">
+            <div class="meta-cate-flex">
+  
+  <a class="meta-cate-link" href="/categories/Android/">Android</a>
+   
+</div>
+  
+          </div>
+          <div class="wordcount need-seperator meta-info">
+            10k words 
+          </div>
+        </div>
+        
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/elf/" rel="tag">elf</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/encryption/" rel="tag">encryption</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linker/" rel="tag">linker</a></li></ul>
+
+      </header>
+      <div class="e-content article-entry" itemprop="articleBody">
+        
+          <h1 id="自定义Linker与SO加固"><a href="#自定义Linker与SO加固" class="headerlink" title="自定义Linker与SO加固"></a>自定义Linker与SO加固</h1><h2 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h2><p>在研究360加固方案时，我发现其采用了一种独特的保护机制：在主SO文件内部嵌套了另一个SO文件，相当于为主SO添加了一层保护壳。这种技术实现引起了我的兴趣，经过深入研究，整理出本文，分享自定义Linker的实现原理及SO加固技术</p>
+<h2 id="0x02-Linker源码分析"><a href="#0x02-Linker源码分析" class="headerlink" title="0x02 Linker源码分析"></a>0x02 Linker源码分析</h2><h3 id="PS：这部分有点长，如果你只想看怎么实现的，可以直接跳到总结"><a href="#PS：这部分有点长，如果你只想看怎么实现的，可以直接跳到总结" class="headerlink" title="PS：这部分有点长，如果你只想看怎么实现的，可以直接跳到总结"></a>PS：<strong>这部分有点长，如果你只想看怎么实现的，可以直接跳到总结</strong></h3><h3 id="核心代码解析（只贴关键部分，不然太长了）"><a href="#核心代码解析（只贴关键部分，不然太长了）" class="headerlink" title="核心代码解析（只贴关键部分，不然太长了）"></a>核心代码解析（只贴关键部分，不然太长了）</h3><h4 id="do-dlopen-一切的起点"><a href="#do-dlopen-一切的起点" class="headerlink" title="do_dlopen - 一切的起点"></a>do_dlopen - 一切的起点</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">soinfo* si = find_library(name);    <span class="comment">// 查找并加载SO到内存</span></span><br><span class="line"><span class="keyword">if</span> (si != <span class="literal">NULL</span>) &#123;</span><br><span class="line">    si-&gt;CallConstructors();          <span class="comment">// 调用SO的初始化函数</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>看起来很简单对吧，让我们深入看看这两个函数都干了啥</p>
+<h4 id="find-library-负责找SO的函数"><a href="#find-library-负责找SO的函数" class="headerlink" title="find_library - 负责找SO的函数"></a>find_library - 负责找SO的函数</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> soinfo* <span class="title function_">find_library</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* name)</span> &#123;</span><br><span class="line">  soinfo* si = find_library_internal(name);  <span class="comment">// 寻找相应的SO信息</span></span><br><span class="line">  <span class="keyword">if</span> (si != <span class="literal">NULL</span>) &#123;</span><br><span class="line">    si-&gt;ref_count++;   <span class="comment">// 这个计数很重要，用来判断SO是否已经加载过</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> si;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="CallConstructors-调用构造函数"><a href="#CallConstructors-调用构造函数" class="headerlink" title="CallConstructors - 调用构造函数"></a>CallConstructors - 调用构造函数</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 直接看重点</span></span><br><span class="line"><span class="keyword">if</span> (dynamic != <span class="literal">NULL</span>) &#123;</span><br><span class="line">    <span class="keyword">for</span> (Elf32_Dyn* d = dynamic; d-&gt;d_tag != DT_NULL; ++d) &#123;</span><br><span class="line">      <span class="keyword">if</span> (d-&gt;d_tag == DT_NEEDED) &#123;    <span class="comment">// 先调用依赖库的构造函数</span></span><br><span class="line">        <span class="type">const</span> <span class="type">char</span>* library_name = strtab + d-&gt;d_un.d_val;</span><br><span class="line">        TRACE(<span class="string">&quot;\&quot;%s\&quot;: calling constructors in DT_NEEDED \&quot;%s\&quot;&quot;</span>, name, library_name);</span><br><span class="line">        find_loaded_library(library_name)-&gt;CallConstructors();</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// DT_INIT要在DT_INIT_ARRAY之前调用</span></span><br><span class="line">TRACE(<span class="string">&quot;\&quot;%s\&quot;: calling constructors&quot;</span>, name);</span><br><span class="line">CallFunction(<span class="string">&quot;DT_INIT&quot;</span>, init_func);           <span class="comment">// SO文件加壳的脱壳点！划重点！</span></span><br><span class="line">CallArray(<span class="string">&quot;DT_INIT_ARRAY&quot;</span>, init_array, init_array_count, <span class="literal">false</span>);</span><br></pre></td></tr></table></figure>
+<p>这里有个有趣的地方：<code>DT_INIT</code>和<code>DT_INIT_ARRAY</code>是很多加固方案的脱壳点，因为这是SO被加载后最早执行的地方之一</p>
+<h4 id="find-library-internal-真正干活的函数"><a href="#find-library-internal-真正干活的函数" class="headerlink" title="find_library_internal - 真正干活的函数"></a>find_library_internal - 真正干活的函数</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> soinfo* <span class="title function_">find_library_internal</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* name)</span> &#123;</span><br><span class="line">  <span class="keyword">if</span> (name == <span class="literal">NULL</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> somain;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  soinfo* si = find_loaded_library(name);</span><br><span class="line">  <span class="keyword">if</span> (si != <span class="literal">NULL</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (si-&gt;flags &amp; FLAG_LINKED) &#123;</span><br><span class="line">      <span class="keyword">return</span> si;    <span class="comment">// 已经加载过了，直接返回</span></span><br><span class="line">    &#125;</span><br><span class="line">    DL_ERR(<span class="string">&quot;OOPS: recursive link to \&quot;%s\&quot;&quot;</span>, si-&gt;name);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  TRACE(<span class="string">&quot;[ &#x27;%s&#x27; has not been loaded yet.  Locating...]&quot;</span>, name);</span><br><span class="line">  si = load_library(name);    <span class="comment">// 真正加载SO文件的地方</span></span><br><span class="line">  <span class="keyword">if</span> (si == <span class="literal">NULL</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  TRACE(<span class="string">&quot;[ init_library base=0x%08x sz=0x%08x name=&#x27;%s&#x27; ]&quot;</span>,</span><br><span class="line">        si-&gt;base, si-&gt;size, si-&gt;name);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!soinfo_link_image(si)) &#123;    <span class="comment">// 执行重定位（会用mmap，所以在/proc/pid/maps能看到）</span></span><br><span class="line">    munmap(reinterpret_cast&lt;<span class="type">void</span>*&gt;(si-&gt;base), si-&gt;size);</span><br><span class="line">    soinfo_free(si);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">return</span> si;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>关于重定位</strong>：想象一下，你的SO文件里调用了<code>printf</code>函数，但编译的时候并不知道<code>printf</code>在内存的哪个位置，所以先用个占位符（比如<code>call 0x1234</code>）。重定位就是把这个占位符改成真实的地址</p>
+<p><strong>基本流程梳理</strong>：</p>
+<ol>
+<li><strong>find_loaded_library()</strong>：先看看是不是已经加载过了</li>
+<li><strong>load_library()</strong>：没加载过，那就加载</li>
+<li><strong>soinfo_link_image()</strong>：处理各种动态信息，执行重定位</li>
+</ol>
+<h4 id="load-library-真正的加载器"><a href="#load-library-真正的加载器" class="headerlink" title="load_library - 真正的加载器"></a>load_library - 真正的加载器</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> soinfo* <span class="title function_">load_library</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* name)</span> &#123;</span><br><span class="line">    <span class="comment">// 打开文件</span></span><br><span class="line">    <span class="type">int</span> fd = open_library(name);</span><br><span class="line">    <span class="keyword">if</span> (fd == <span class="number">-1</span>) &#123;</span><br><span class="line">        DL_ERR(<span class="string">&quot;library \&quot;%s\&quot; not found&quot;</span>, name);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 读取ELF头并加载段</span></span><br><span class="line">    ElfReader <span class="title function_">elf_reader</span><span class="params">(name, fd)</span>;</span><br><span class="line">    <span class="keyword">if</span> (!elf_reader.Load()) &#123;    <span class="comment">// 注意：这里只读Program段！</span></span><br><span class="line">        <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="type">const</span> <span class="type">char</span>* bname = <span class="built_in">strrchr</span>(name, <span class="string">&#x27;/&#x27;</span>);</span><br><span class="line">    <span class="comment">// 为SO分配soinfo结构</span></span><br><span class="line">    soinfo* si = soinfo_alloc(bname ? bname + <span class="number">1</span> : name);</span><br><span class="line">    <span class="keyword">if</span> (si == <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 初始化soinfo对象</span></span><br><span class="line">    si-&gt;base = elf_reader.load_start();</span><br><span class="line">    si-&gt;size = elf_reader.load_size();</span><br><span class="line">    si-&gt;load_bias = elf_reader.load_bias();</span><br><span class="line">    si-&gt;flags = <span class="number">0</span>;</span><br><span class="line">    si-&gt;entry = <span class="number">0</span>;</span><br><span class="line">    si-&gt;dynamic = <span class="literal">NULL</span>;</span><br><span class="line">    si-&gt;phnum = elf_reader.phdr_count();</span><br><span class="line">    si-&gt;phdr = elf_reader.loaded_phdr();</span><br><span class="line">    <span class="keyword">return</span> si;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="ElfReader-Load"><a href="#ElfReader-Load" class="headerlink" title="ElfReader::Load()"></a>ElfReader::Load()</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">bool</span> <span class="title function_">ElfReader::Load</span><span class="params">()</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> ReadElfHeader() &amp;&amp;          <span class="comment">// 读ELF头</span></span><br><span class="line">         VerifyElfHeader() &amp;&amp;        <span class="comment">// 校验ELF头</span></span><br><span class="line">         ReadProgramHeader() &amp;&amp;      <span class="comment">// 读程序头</span></span><br><span class="line">         ReserveAddressSpace() &amp;&amp;    <span class="comment">// 分配内存空间</span></span><br><span class="line">         LoadSegments() &amp;&amp;           <span class="comment">// 加载段（脱壳的好地方）</span></span><br><span class="line">         FindPhdr();                 <span class="comment">// 设置加载地址</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>发现</strong>：Android只读Program Header，而IDA依赖Section Header！这就是为什么很多加固会”抹头”——把Section Header搞坏，IDA就懵了，但Android照样能跑</p>
+<h4 id="soinfo-link-image-链接的核心"><a href="#soinfo-link-image-链接的核心" class="headerlink" title="soinfo_link_image - 链接的核心"></a>soinfo_link_image - 链接的核心</h4><p>在<code>si = load_library(name)</code>拿到SO信息后，就要开始一系列复杂操作了：</p>
+<h5 id="1-定位动态节"><a href="#1-定位动态节" class="headerlink" title="1. 定位动态节"></a>1. 定位动态节</h5><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">phdr_table_get_dynamic_section(<span class="type">const</span> Elf32_Phdr* phdr_table,</span><br><span class="line">                               <span class="type">int</span>               phdr_count,</span><br><span class="line">                               Elf32_Addr        load_bias,</span><br><span class="line">                               Elf32_Dyn**       dynamic,</span><br><span class="line">                               <span class="type">size_t</span>*           dynamic_count,</span><br><span class="line">                               Elf32_Word*       dynamic_flags)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">const</span> Elf32_Phdr* phdr = phdr_table;</span><br><span class="line">    <span class="type">const</span> Elf32_Phdr* phdr_limit = phdr + phdr_count;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (phdr = phdr_table; phdr &lt; phdr_limit; phdr++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (phdr-&gt;p_type != PT_DYNAMIC) &#123;    <span class="comment">// 找DYNAMIC段</span></span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        *dynamic = reinterpret_cast&lt;Elf32_Dyn*&gt;(load_bias + phdr-&gt;p_vaddr);</span><br><span class="line">        <span class="keyword">if</span> (dynamic_count) &#123;</span><br><span class="line">            *dynamic_count = (<span class="type">unsigned</span>)(phdr-&gt;p_memsz / <span class="number">8</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (dynamic_flags) &#123;</span><br><span class="line">            *dynamic_flags = phdr-&gt;p_flags;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span>;    <span class="comment">// 注意：找到第一个就返回了！</span></span><br><span class="line">    &#125;</span><br><span class="line">    *dynamic = <span class="literal">NULL</span>;</span><br><span class="line">    <span class="keyword">if</span> (dynamic_count) &#123;</span><br><span class="line">        *dynamic_count = <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>又一个有趣的发现</strong>：源码只处理第一个PT_DYNAMIC段！所以你可以加多个动态节来迷惑IDA，因为IDA会全部解析，而Android只看第一个。这算是个小技巧吧~</p>
+<h5 id="2-解析动态节"><a href="#2-解析动态节" class="headerlink" title="2. 解析动态节"></a>2. 解析动态节</h5><p>这部分代码太长了，主要就是初始化各种表：符号表、字符串表、重定位表等等。</p>
+<h5 id="3-加载依赖库"><a href="#3-加载依赖库" class="headerlink" title="3. 加载依赖库"></a>3. 加载依赖库</h5><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 加载依赖库 (DT_NEEDED)</span></span><br><span class="line"><span class="keyword">for</span> (Elf32_Dyn* d = si-&gt;dynamic; d-&gt;d_tag != DT_NULL; ++d) &#123;</span><br><span class="line">    <span class="keyword">if</span> (d-&gt;d_tag == DT_NEEDED) &#123;</span><br><span class="line">        <span class="type">const</span> <span class="type">char</span>* library_name = si-&gt;strtab + d-&gt;d_un.d_val;</span><br><span class="line">        DEBUG(<span class="string">&quot;%s needs %s&quot;</span>, si-&gt;name, library_name);</span><br><span class="line">        soinfo* lsi = find_library(library_name);    <span class="comment">// 递归加载依赖</span></span><br><span class="line">        <span class="keyword">if</span> (lsi == <span class="literal">NULL</span>) &#123;</span><br><span class="line">            strlcpy(tmp_err_buf, linker_get_error_buffer(), <span class="keyword">sizeof</span>(tmp_err_buf));</span><br><span class="line">            DL_ERR(<span class="string">&quot;could not load library \&quot;%s\&quot; needed by \&quot;%s\&quot;; caused by %s&quot;</span>,</span><br><span class="line">                   library_name, si-&gt;name, tmp_err_buf);</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        *pneeded++ = lsi;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h5 id="4-重定位操作"><a href="#4-重定位操作" class="headerlink" title="4. 重定位操作"></a>4. 重定位操作</h5><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (si-&gt;has_text_relocations) &#123;</span><br><span class="line">    <span class="comment">// 让代码段可写，这样才能修改</span></span><br><span class="line">    DL_WARN(<span class="string">&quot;%s has text relocations. This is wasting memory and is &quot;</span></span><br><span class="line">            <span class="string">&quot;a security risk. Please fix.&quot;</span>, si-&gt;name);</span><br><span class="line">    <span class="keyword">if</span> (phdr_table_unprotect_segments(si-&gt;phdr, si-&gt;phnum, si-&gt;load_bias) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        DL_ERR(<span class="string">&quot;can&#x27;t unprotect loadable segments for \&quot;%s\&quot;: %s&quot;</span>,</span><br><span class="line">               si-&gt;name, strerror(errno));</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (si-&gt;plt_rel != <span class="literal">NULL</span>) &#123;</span><br><span class="line">    DEBUG(<span class="string">&quot;[ relocating %s plt ]&quot;</span>, si-&gt;name );</span><br><span class="line">    <span class="keyword">if</span> (soinfo_relocate(si, si-&gt;plt_rel, si-&gt;plt_rel_count, needed)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span> (si-&gt;rel != <span class="literal">NULL</span>) &#123;</span><br><span class="line">    DEBUG(<span class="string">&quot;[ relocating %s ]&quot;</span>, si-&gt;name );</span><br><span class="line">    <span class="keyword">if</span> (soinfo_relocate(si, si-&gt;rel, si-&gt;rel_count, needed)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="小结一下"><a href="#小结一下" class="headerlink" title="小结一下"></a>小结一下</h3><p>说白了，Linker就是个搬运工，把磁盘上的SO文件按照一定的规则搬到内存里，让我们的程序能够调用。主要干这么几件事：</p>
+<h4 id="1-加载ELF文件"><a href="#1-加载ELF文件" class="headerlink" title="1. 加载ELF文件"></a>1. <strong>加载ELF文件</strong></h4><ul>
+<li>用<code>mmap</code>把SO文件映射到内存（就像把文件”贴”到内存里）</li>
+<li>解析各种头部信息</li>
+<li>给<code>.bss</code>、<code>.data</code>这些段分配空间</li>
+</ul>
+<h4 id="2-处理依赖关系"><a href="#2-处理依赖关系" class="headerlink" title="2. 处理依赖关系"></a>2. <strong>处理依赖关系</strong></h4><ul>
+<li>看看这个SO依赖哪些其他的SO</li>
+<li>把依赖的SO也加载进来（递归的过程）</li>
+<li>建立依赖关系图，避免重复加载</li>
+</ul>
+<h4 id="3-符号解析和重定位"><a href="#3-符号解析和重定位" class="headerlink" title="3. 符号解析和重定位"></a>3. <strong>符号解析和重定位</strong></h4><ul>
+<li>找到导出的函数和变量</li>
+<li>修正函数调用地址</li>
+<li>处理各种符号冲突</li>
+</ul>
+<h4 id="4-执行初始化"><a href="#4-执行初始化" class="headerlink" title="4. 执行初始化"></a>4. <strong>执行初始化</strong></h4><ul>
+<li>按正确的顺序调用各个构造函数</li>
+</ul>
+<h2 id="0x03-自定义Linker实现"><a href="#0x03-自定义Linker实现" class="headerlink" title="0x03 自定义Linker实现"></a>0x03 自定义Linker实现</h2><p>基于对Android Linker的理解，实现自定义Linker无需像AOSP源码那样考虑所有情况。我们可以专注于核心功能，实现一个精简版本</p>
+<p>详细实现可参考：<a target="_blank" rel="noopener" href="https://bbs.kanxue.com/thread-282316.htm">自實現Linker加載so</a></p>
+<p>我实现的自定义Linker项目：<a target="_blank" rel="noopener" href="https://github.com/SoyBeanMilkx/soLoader">soLoader</a></p>
+<h3 id="架构设计"><a href="#架构设计" class="headerlink" title="架构设计"></a>架构设计</h3><p><strong>组件关系图</strong>：</p>
+<p><img src="Relationship.png" alt="Relationship"></p>
+<p><strong>核心组件职责</strong>：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>组件名称</th>
+<th>主要功能</th>
+<th>关键操作</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ElfLoader</code></td>
+<td>系统协调器和公共API</td>
+<td><code>LoadLibrary()</code>, <code>GetSymbol()</code>, <code>CallConstructors()</code></td>
+</tr>
+<tr>
+<td><code>ElfReader</code></td>
+<td>ELF文件解析与验证</td>
+<td>读取头部、提取程序头、验证格式</td>
+</tr>
+<tr>
+<td><code>MemoryManager</code></td>
+<td>内存分配与保护</td>
+<td><code>mmap()</code>操作、段加载、权限设置</td>
+</tr>
+<tr>
+<td><code>SoinfoManager</code></td>
+<td>共享对象元数据管理</td>
+<td><code>soinfo</code>结构创建、依赖跟踪</td>
+</tr>
+<tr>
+<td><code>Relocator</code></td>
+<td>符号解析与重定位</td>
+<td>处理重定位、解析符号、处理PLT/GOT</td>
+</tr>
+<tr>
+<td><code>Utils</code></td>
+<td>系统工具与内省</td>
+<td>系统调用、ELF结构辅助函数</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>具体实现原理请参考项目源码</p>
+<h2 id="0x04-SO加固实现"><a href="#0x04-SO加固实现" class="headerlink" title="0x04 SO加固实现"></a>0x04 SO加固实现</h2><h3 id="加固方案设计"><a href="#加固方案设计" class="headerlink" title="加固方案设计"></a>加固方案设计</h3><p>以360加固为例，其核心思想是将主SO加密后嵌入壳SO中。壳SO作为loader被原生Linker加载后，负责解密、映射、链接、重定位主SO，最终调用主SO的函数来释放DEX</p>
+<p>我们自己在设计的时候可以直接照搬这种模式，但是把两个so合并的操作有些麻烦，而且主SO本身就是被加密的，我个人觉得放在哪里都无所谓，你要想解密都得去分析壳SO，所以这里我实现了一个简化的版本，把主SO加密之后藏在了图片的后面，这样看上去它就是一张普通的图片</p>
+<p>为简化实现，本方案采用以下设计：</p>
+<ul>
+<li>不将两个SO合并，而是将加密的主SO隐藏在APK资源中</li>
+<li>选择<code>res/mipmap/ic_launcher.webp</code>（应用图标）作为载体</li>
+<li>使用RC4算法加密主SO，并添加魔数标识便于定位</li>
+</ul>
+<h3 id="加密实现"><a href="#加密实现" class="headerlink" title="加密实现"></a>加密实现</h3><p>加密脚本的核心功能：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/env python3</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">python prepare_hidden_so.py &lt;so_file&gt; &lt;webp_image&gt; &lt;output_image&gt; &lt;key&gt;</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="keyword">import</span> struct</span><br><span class="line"></span><br><span class="line">MAGIC_HEADER = <span class="string">b&quot;Yuuki&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">rc4_init</span>(<span class="params">key</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;初始化RC4 S盒&quot;&quot;&quot;</span></span><br><span class="line">    S = <span class="built_in">list</span>(<span class="built_in">range</span>(<span class="number">256</span>))</span><br><span class="line">    j = <span class="number">0</span></span><br><span class="line">    key_len = <span class="built_in">len</span>(key)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">256</span>):</span><br><span class="line">        j = (j + S[i] + key[i % key_len]) &amp; <span class="number">0xFF</span></span><br><span class="line">        S[i], S[j] = S[j], S[i]</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> S</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">rc4_crypt</span>(<span class="params">S, data</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;RC4加密/解密&quot;&quot;&quot;</span></span><br><span class="line">    S = S.copy()</span><br><span class="line">    i = j = <span class="number">0</span></span><br><span class="line">    result = <span class="built_in">bytearray</span>()</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> byte <span class="keyword">in</span> data:</span><br><span class="line">        i = (i + <span class="number">1</span>) &amp; <span class="number">0xFF</span></span><br><span class="line">        j = (j + S[i]) &amp; <span class="number">0xFF</span></span><br><span class="line">        S[i], S[j] = S[j], S[i]</span><br><span class="line">        k = S[(S[i] + S[j]) &amp; <span class="number">0xFF</span>]</span><br><span class="line">        result.append(byte ^ k)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">bytes</span>(result)</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">main</span>():</span><br><span class="line">    <span class="comment"># 参数验证</span></span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">len</span>(sys.argv) != <span class="number">5</span>:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;Usage: <span class="subst">&#123;sys.argv[<span class="number">0</span>]&#125;</span> &lt;so_file&gt; &lt;webp_image&gt; &lt;output_image&gt; &lt;key&gt;&quot;</span>)</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span></span><br><span class="line">    </span><br><span class="line">    so_file = sys.argv[<span class="number">1</span>]</span><br><span class="line">    webp_image = sys.argv[<span class="number">2</span>]</span><br><span class="line">    output_image = sys.argv[<span class="number">3</span>]</span><br><span class="line">    key = sys.argv[<span class="number">4</span>].encode(<span class="string">&#x27;utf-8&#x27;</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">with</span> <span class="built_in">open</span>(so_file, <span class="string">&#x27;rb&#x27;</span>) <span class="keyword">as</span> f:</span><br><span class="line">        so_data = f.read()</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">with</span> <span class="built_in">open</span>(webp_image, <span class="string">&#x27;rb&#x27;</span>) <span class="keyword">as</span> f:</span><br><span class="line">        webp_data = f.read()</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># RC4加密</span></span><br><span class="line">    S = rc4_init(key)</span><br><span class="line">    encrypted_so = rc4_crypt(S, so_data)</span><br><span class="line">    </span><br><span class="line">    S_verify = rc4_init(key)</span><br><span class="line">    decrypted = rc4_crypt(S_verify, encrypted_so)</span><br><span class="line">    <span class="keyword">if</span> decrypted != so_data:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;Error: Encryption verification failed!&quot;</span>)</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">with</span> <span class="built_in">open</span>(output_image, <span class="string">&#x27;wb&#x27;</span>) <span class="keyword">as</span> f:</span><br><span class="line">        f.write(webp_data)                          <span class="comment"># 原始WebP数据</span></span><br><span class="line">        f.write(MAGIC_HEADER)                       <span class="comment"># 魔数标识</span></span><br><span class="line">        f.write(struct.pack(<span class="string">&#x27;&lt;I&#x27;</span>, <span class="built_in">len</span>(so_data)))    <span class="comment"># 原始SO大小</span></span><br><span class="line">        f.write(encrypted_so)                       <span class="comment"># 加密的SO数据</span></span><br><span class="line">    </span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;加密完成！隐藏数据起始偏移: <span class="subst">&#123;<span class="built_in">len</span>(webp_data)&#125;</span>&quot;</span>)</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    sys.exit(main())</span><br></pre></td></tr></table></figure>
+<h3 id="解密流程"><a href="#解密流程" class="headerlink" title="解密流程"></a>解密流程</h3><p>完整的解密加载流程：</p>
+<ol>
+<li><strong>资源提取</strong>（Java层）</li>
+<li><strong>内存映射与解密</strong>（Native层）</li>
+<li><strong>加载执行</strong>（自定义Linker）</li>
+</ol>
+<h4 id="1-Java层资源提取"><a href="#1-Java层资源提取" class="headerlink" title="1. Java层资源提取"></a>1. Java层资源提取</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title function_">getExtractedImagePath</span><span class="params">(Context context)</span> &#123;</span><br><span class="line">    <span class="type">File</span> <span class="variable">tempDir</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">File</span>(context.getCacheDir(), <span class="string">&quot;yuuki_temp&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span> (!tempDir.exists()) &#123;</span><br><span class="line">        tempDir.mkdirs();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">File</span>(tempDir, <span class="string">&quot;temp_image.webp&quot;</span>).getAbsolutePath();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="type">boolean</span> <span class="title function_">extractImageFromApk</span><span class="params">(Context context, String outputPath)</span> &#123;</span><br><span class="line">    <span class="type">String</span> <span class="variable">apkPath</span> <span class="operator">=</span> context.getApplicationInfo().sourceDir;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">try</span> (<span class="type">ZipInputStream</span> <span class="variable">zip</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ZipInputStream</span>(<span class="keyword">new</span> <span class="title class_">FileInputStream</span>(apkPath))) &#123;</span><br><span class="line">        ZipEntry entry;</span><br><span class="line">        <span class="keyword">while</span> ((entry = zip.getNextEntry()) != <span class="literal">null</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (entry.getName().equals(<span class="string">&quot;res/mipmap-xxxhdpi-v4/ic_launcher.webp&quot;</span>)) &#123;</span><br><span class="line">                <span class="type">File</span> <span class="variable">outFile</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">File</span>(outputPath);</span><br><span class="line">                <span class="type">File</span> <span class="variable">parent</span> <span class="operator">=</span> outFile.getParentFile();</span><br><span class="line">                <span class="keyword">if</span> (!parent.exists()) &#123;</span><br><span class="line">                    parent.mkdirs();</span><br><span class="line">                &#125;</span><br><span class="line">                </span><br><span class="line">                <span class="keyword">try</span> (<span class="type">FileOutputStream</span> <span class="variable">out</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">FileOutputStream</span>(outFile)) &#123;</span><br><span class="line">                    <span class="type">byte</span>[] buffer = <span class="keyword">new</span> <span class="title class_">byte</span>[<span class="number">1024</span>];</span><br><span class="line">                    <span class="type">int</span> len;</span><br><span class="line">                    <span class="keyword">while</span> ((len = zip.read(buffer)) &gt; <span class="number">0</span>) &#123;</span><br><span class="line">                        out.write(buffer, <span class="number">0</span>, len);</span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            zip.closeEntry();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="2-Native层解密实现"><a href="#2-Native层解密实现" class="headerlink" title="2. Native层解密实现"></a>2. Native层解密实现</h4><p>在ElfReader中添加解密功能：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">ElfReader::HandleFileType</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 检查文件是否包含隐藏的SO</span></span><br><span class="line">    <span class="keyword">if</span> (CryptoUtils::<span class="built_in">HasHiddenSO</span>(mapped_file_, file_size_)) &#123;</span><br><span class="line">        <span class="built_in">LOGI</span>(<span class="string">&quot;检测到隐藏的SO文件，开始提取并解密...&quot;</span>);</span><br><span class="line">        </span><br><span class="line">        <span class="type">void</span>* decrypted_data = <span class="literal">nullptr</span>;</span><br><span class="line">        <span class="type">size_t</span> decrypted_size = <span class="number">0</span>;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> (!CryptoUtils::<span class="built_in">ExtractAndDecryptHiddenSO</span>(mapped_file_, file_size_,</span><br><span class="line">                                                    &amp;decrypted_data, &amp;decrypted_size)) &#123;</span><br><span class="line">            <span class="built_in">LOGE</span>(<span class="string">&quot;提取和解密隐藏的SO失败&quot;</span>);</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 替换映射数据为解密后的数据</span></span><br><span class="line">        decrypted_buffer_ = decrypted_data;</span><br><span class="line">        is_decrypted_ = <span class="literal">true</span>;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 释放原始映射，使用解密缓冲区</span></span><br><span class="line">        <span class="built_in">munmap</span>(mapped_file_, file_size_);</span><br><span class="line">        mapped_file_ = decrypted_buffer_;</span><br><span class="line">        file_size_ = decrypted_size;</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">LOGI</span>(<span class="string">&quot;隐藏SO提取和解密成功，大小: %zu&quot;</span>, decrypted_size);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>解密工具类的核心实现包括：</p>
+<ul>
+<li>魔数头定位</li>
+<li>RC4解密算法</li>
+<li>ELF格式验证</li>
+<li>内存管理</li>
+</ul>
+<p>这样，自定义Linker就能透明地加载加密的SO文件，实现了简单的SO加固保护</p>
+<h2 id="0x05-总结"><a href="#0x05-总结" class="headerlink" title="0x05 总结"></a>0x05 总结</h2><p>本文分析了Android Linker的工作原理，并基于此实现了自定义Linker和SO加固方案。整个项目涉及很多内存操作和底层知识，还是从中学到了很多东西的OvO。希望这篇文章对想了解Linker的同学有所帮助。如果有什么问题或建议，欢迎交流</p>
+<hr>
+<p><strong>参考资料</strong>：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://cs.android.com/android/platform/superproject/main/+/main:bionic/linker/">Android Open Source Project (AOSP) Linker源码</a></li>
+<li><a target="_blank" rel="noopener" href="https://ctf-wiki.org/executable/elf/structure/basic-info/">ELF文件格式规范</a></li>
+<li><a target="_blank" rel="noopener" href="https://bbs.kanxue.com/thread-282316.htm">自實現Linker加載so</a></li>
+</ul>
+
+        
+      </div>
+
+         
+    </div>
+    
+     
+  </div>
+  
+    
+<nav id="article-nav">
+  <a class="article-nav-btn left  disabled "
+     >
+    <i class="fa-solid fa-angle-left"></i>
+    <p class="title-text">
+        
+    </p>
+  </a>
+  <a class="article-nav-btn right "
+    
+      href="/2025/05/16/Dobby/"
+      title="Dobby框架使用"
+     >
+
+    <p class="title-text">
+      
+        Dobby框架使用
+        
+    </p>
+    <i class="fa-solid fa-angle-right"></i>
+  </a>
+</nav>
+
+
+  
+</article>
+
+
+
+
+
+    </div>
+    <div id="footer-wrapper">
+      <footer id="footer" style="text-align: center;">
+  <div id="footer-info" class="inner">
+    <p>到底了</p>
+    <p>
+      &copy; 2025 Yuuki
+    </p>
+  </div>
+</footer>
+    </div>
+    <div class="back-to-top-wrapper">
+    <button id="back-to-top-btn" class="back-to-top-btn hide" onclick="topFunction()">
+        <i class="fa-solid fa-angle-up"></i>
+    </button>
+</div>
+
+<script>
+    function topFunction() {
+        window.scroll({ top: 0, behavior: 'smooth' });
+    }
+    let btn = document.getElementById('back-to-top-btn');
+    function scrollFunction() {
+        if (document.body.scrollTop > 600 || document.documentElement.scrollTop > 600) {
+            btn.classList.remove('hide')
+        } else {
+            btn.classList.add('hide')
+        }
+    }
+    window.onscroll = function() {
+        scrollFunction();
+    }
+</script>
+
+  </div>
+  <script src="/js/light-dark-switch.js"></script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"left","width":220,"height":460,"hOffset":0,"vOffset":-100},"mobile":{"show":true},"react":{"opacity":0.85},"log":false});</script></body>
+</html>

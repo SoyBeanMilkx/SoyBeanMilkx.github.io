@@ -210,9 +210,9 @@
       <h3 class="widget-title">Recent Posts</h3>
       <ul>
         
-          <a class="recent-link" href="/2025/06/14/CustomLinker/" title="自定义Linker&so加固" >
+          <a class="recent-link" href="/2025/06/15/CustomLinker/" title="自定义Linker与SO加固" >
             <div class="recent-link-text">
-              自定义Linker&amp;so加固
+              自定义Linker与SO加固
             </div>
           </a>
         
@@ -264,7 +264,7 @@
   
     
       <h1 itemprop="name">
-        <a class="p-name article-title" href="/2025/06/14/CustomLinker/">自定义Linker&amp;so加固</a>
+        <a class="p-name article-title" href="/2025/06/15/CustomLinker/">自定义Linker与SO加固</a>
       </h1>
     
   
@@ -272,7 +272,7 @@
 
         <div class='meta-info-bar'>
           <div class="meta-info">
-  <time class="dt-published" datetime="2025-06-14T05:14:10.000Z" itemprop="datePublished">2025-06-14</time>
+  <time class="dt-published" datetime="2025-06-15T05:14:10.000Z" itemprop="datePublished">2025-06-15</time>
 </div>
           <div class="need-seperator meta-info">
             <div class="meta-cate-flex">
@@ -283,7 +283,7 @@
   
           </div>
           <div class="wordcount need-seperator meta-info">
-            26k words 
+            10k words 
           </div>
         </div>
         
@@ -294,10 +294,10 @@
         
           <div class="truncate-text">
             
-              自定义Linker&amp;so加固0x01 前言最近在研究360加固的时候发现它的so里还藏了个so，相当于给主so加了一层壳，我觉得很神奇，于是就研究了一下，写下了这篇文章。
-0x02 Linker源码分析ps：这部分可以直接跳过，直接看总结就行由于linker源码较长，故只贴关键部分do_dlopen:1234soinfo* si = find_library(name);//查找并加载so到内存  if (si != NULL) &#123;    si-&gt;CallConstructors();//调用so的.init_xxx函数  &#125;
-接下来解析find_library(name)与si-&gt;CallConstructors()。
-find_library:1234567static soinfo* find_library(const char* name) &#123;  soinfo* si = find_library_internal(name);//寻找相应的so信息  if (si != NULL) &#123;    si-&gt;r...
+              自定义Linker与SO加固0x01 前言在研究360加固方案时，我发现其采用了一种独特的保护机制：在主SO文件内部嵌套了另一个SO文件，相当于为主SO添加了一层保护壳。这种技术实现引起了我的兴趣，经过深入研究，整理出本文，分享自定义Linker的实现原理及SO加固技术
+0x02 Linker源码分析PS：这部分有点长，如果你只想看怎么实现的，可以直接跳到总结核心代码解析（只贴关键部分，不然太长了）do_dlopen - 一切的起点1234soinfo* si = find_library(name);    // 查找并加载SO到内存if (si != NULL) &#123;    si-&gt;CallConstructors();          // 调用SO的初始化函数&#125;
+看起来很简单对吧，让我们深入看看这两个函数都干了啥
+find_library - 负责找SO的函数1234567static soinfo* find_library(const char* name) &#123;  soinfo* si = find_library_internal...
             
           </div>
         
@@ -309,7 +309,7 @@ find_library:1234567static soinfo* find_library(const char* name) &#123;  soinfo
      
     <a class="right-panel  non-pic  "
       
-      href="/2025/06/14/CustomLinker/" 
+      href="/2025/06/15/CustomLinker/" 
     >
        
       <i class="fa-solid fa-angle-right non-pic"></i>

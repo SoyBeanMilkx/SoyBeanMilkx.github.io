@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+
+
+<html theme="dark" showBanner="true" hasBanner="true" > 
+<link href="https://cdn.staticfile.org/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet">
+<link href="https://cdn.staticfile.org/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet">
+<link href="https://cdn.staticfile.org/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet">
+<script src="/js/color.global.min.js" ></script>
+<script src="/js/load-settings.js" ></script>
+<head>
+  <meta charset="utf-8">
+  
+  
+  
+
+  
+  <title>Andoird平台的so注入 | Yuuki</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <link rel="preload" href="/css/fonts/Roboto-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+  <link rel="preload" href="/css/fonts/Roboto-Bold.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+
+  <meta name="description" content="android平台的so注入前言：由于安卓的进程隔离机制，我们在hook或操作其他进程时，往往需要先把so注入到目标进程 0x01 什么是so注入一句话概括下来就是 把自己的so加载到目标进程的地址空间 0x02 主流的注入方式据我所知，目前只有两种：  注入zygote进程 通过ptrace直接注入目标进程  先来聊聊第一点吧，我们知道安卓中所有应用进程都fork自zygote进程，所以直接把s">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Andoird平台的so注入">
+<meta property="og:url" content="http://example.com/2025/07/12/InjectSo/index.html">
+<meta property="og:site_name" content="Yuuki">
+<meta property="og:description" content="android平台的so注入前言：由于安卓的进程隔离机制，我们在hook或操作其他进程时，往往需要先把so注入到目标进程 0x01 什么是so注入一句话概括下来就是 把自己的so加载到目标进程的地址空间 0x02 主流的注入方式据我所知，目前只有两种：  注入zygote进程 通过ptrace直接注入目标进程  先来聊聊第一点吧，我们知道安卓中所有应用进程都fork自zygote进程，所以直接把s">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2025-07-12T08:19:10.000Z">
+<meta property="article:modified_time" content="2025-07-04T10:18:06.209Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="elf">
+<meta property="article:tag" content="kernel">
+<meta name="twitter:card" content="summary">
+  
+  
+    <link rel="shortcut icon" href="/site_img/icon.jpg">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+  
+  
+    
+<div id="banner" class="">
+  <img src="/site_img/backg.png" itemprop="image">
+  <div id="banner-dim"></div>
+</div>
+ 
+   
+  <div id="main-grid" class="  ">
+    <div id="nav" class=""  >
+      <navbar id="navbar">
+  <nav id="title-nav">
+    <a href="/">
+      <div id="vivia-logo">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+      <div>Yuuki </div>
+    </a>
+  </nav>
+  <nav id="main-nav">
+    
+      <a class="main-nav-link" href="/">Home</a>
+    
+      <a class="main-nav-link" href="/archives">Archives</a>
+    
+      <a class="main-nav-link" href="/about">About</a>
+    
+  </nav>
+  <nav id="sub-nav">
+    <a id="theme-btn" class="nav-icon">
+      <span class="light-mode-icon"><svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M438.5-829.913v-48q0-17.452 11.963-29.476 11.964-12.024 29.326-12.024 17.363 0 29.537 12.024t12.174 29.476v48q0 17.452-11.963 29.476-11.964 12.024-29.326 12.024-17.363 0-29.537-12.024T438.5-829.913Zm0 747.826v-48q0-17.452 11.963-29.476 11.964-12.024 29.326-12.024 17.363 0 29.537 12.024t12.174 29.476v48q0 17.452-11.963 29.476-11.964 12.024-29.326 12.024-17.363 0-29.537-12.024T438.5-82.087ZM877.913-438.5h-48q-17.452 0-29.476-11.963-12.024-11.964-12.024-29.326 0-17.363 12.024-29.537t29.476-12.174h48q17.452 0 29.476 11.963 12.024 11.964 12.024 29.326 0 17.363-12.024 29.537T877.913-438.5Zm-747.826 0h-48q-17.452 0-29.476-11.963-12.024-11.964-12.024-29.326 0-17.363 12.024-29.537T82.087-521.5h48q17.452 0 29.476 11.963 12.024 11.964 12.024 29.326 0 17.363-12.024 29.537T130.087-438.5Zm660.174-290.87-34.239 32q-12.913 12.674-29.565 12.174-16.653-.5-29.327-13.174-12.674-12.673-12.554-28.826.12-16.152 12.794-28.826l33-35q12.913-12.674 30.454-12.674t30.163 12.847q12.709 12.846 12.328 30.826-.38 17.98-13.054 30.653ZM262.63-203.978l-32 34q-12.913 12.674-30.454 12.674t-30.163-12.847q-12.709-12.846-12.328-30.826.38-17.98 13.054-30.653l33.239-31q12.913-12.674 29.565-12.174 16.653.5 29.327 13.174 12.674 12.673 12.554 28.826-.12 16.152-12.794 28.826Zm466.74 33.239-32-33.239q-12.674-12.913-12.174-29.565.5-16.653 13.174-29.327 12.673-12.674 28.826-13.054 16.152-.38 28.826 12.294l35 33q12.674 12.913 12.674 30.454t-12.847 30.163q-12.846 12.709-30.826 12.328-17.98-.38-30.653-13.054ZM203.978-697.37l-34-33q-12.674-12.913-13.174-29.945-.5-17.033 12.174-29.707t31.326-13.293q18.653-.62 31.326 13.054l32 34.239q11.674 12.913 11.174 29.565-.5 16.653-13.174 29.327-12.673 12.674-28.826 12.554-16.152-.12-28.826-12.794ZM480-240q-100 0-170-70t-70-170q0-100 70-170t170-70q100 0 170 70t70 170q0 100-70 170t-170 70Zm-.247-82q65.703 0 111.475-46.272Q637-414.544 637-480.247t-45.525-111.228Q545.95-637 480.247-637t-111.475 45.525Q323-545.95 323-480.247t45.525 111.975Q414.05-322 479.753-322ZM481-481Z"/></svg></span>
+      <span class="dark-mode-icon"><svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M480.239-116.413q-152.63 0-258.228-105.478Q116.413-327.37 116.413-480q0-130.935 77.739-227.435t206.304-125.043q43.022-9.631 63.87 10.869t3.478 62.805q-8.891 22.043-14.315 44.463-5.424 22.42-5.424 46.689 0 91.694 64.326 155.879 64.325 64.186 156.218 64.186 24.369 0 46.978-4.946 22.609-4.945 44.413-14.076 42.826-17.369 62.967 1.142 20.142 18.511 10.511 61.054Q807.174-280 712.63-198.206q-94.543 81.793-232.391 81.793Zm0-95q79.783 0 143.337-40.217 63.554-40.218 95.793-108.283-15.608 4.044-31.097 5.326-15.49 1.283-31.859.805-123.706-4.066-210.777-90.539-87.071-86.473-91.614-212.092-.24-16.369.923-31.978 1.164-15.609 5.446-30.978-67.826 32.478-108.282 96.152Q211.652-559.543 211.652-480q0 111.929 78.329 190.258 78.329 78.329 190.258 78.329ZM466.13-465.891Z"/></svg></span>
+    </a>
+    
+    <div id="nav-menu-btn" class="nav-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M177.37-252.282q-17.453 0-29.477-11.964-12.024-11.963-12.024-29.326t12.024-29.537q12.024-12.174 29.477-12.174h605.26q17.453 0 29.477 11.964 12.024 11.963 12.024 29.326t-12.024 29.537q-12.024 12.174-29.477 12.174H177.37Zm0-186.218q-17.453 0-29.477-11.963-12.024-11.964-12.024-29.326 0-17.363 12.024-29.537T177.37-521.5h605.26q17.453 0 29.477 11.963 12.024 11.964 12.024 29.326 0 17.363-12.024 29.537T782.63-438.5H177.37Zm0-186.217q-17.453 0-29.477-11.964-12.024-11.963-12.024-29.326t12.024-29.537q12.024-12.174 29.477-12.174h605.26q17.453 0 29.477 11.964 12.024 11.963 12.024 29.326t-12.024 29.537q-12.024 12.174-29.477 12.174H177.37Z"/></svg>
+    </div>
+  </nav>
+</navbar>
+<div id="nav-dropdown" class="hidden">
+  <div id="dropdown-link-list">
+    
+      <a class="nav-dropdown-link" href="/">Home</a>
+    
+      <a class="nav-dropdown-link" href="/archives">Archives</a>
+    
+      <a class="nav-dropdown-link" href="/about">About</a>
+    
+     
+    </div>
+</div>
+<script>
+  let dropdownBtn = document.getElementById("nav-menu-btn");
+  let dropdownEle = document.getElementById("nav-dropdown");
+  dropdownBtn.onclick = function() {
+    dropdownEle.classList.toggle("hidden");
+  }
+</script>
+    </div>
+    <div id="sidebar-wrapper">
+      <sidebar id="sidebar">
+  
+    <div class="widget-wrap">
+  <div class="info-card">
+    <div class="avatar">
+      
+        <image src=/site_img/icon.jpg></image>
+      
+      <div class="img-dim"></div>
+    </div>
+    <div class="info">
+      <div class="username">Yuuki </div>
+      <div class="dot"></div>
+      <div class="subtitle">不说话 装高手 </div>
+      <div class="link-list">
+        
+          <a class="link-btn" target="_blank" rel="noopener" href="https://x.com/LiYangv?t=kbZV9-LGilEE-2pg_2GBeQ&s=09" title="Twitter"><i class="fa-brands fa-twitter"></i></a>
+        
+          <a class="link-btn" target="_blank" rel="noopener" href="https://steamcommunity.com/profiles/76561199358468625/" title="Steam"><i class="fa-brands fa-steam"></i></a>
+        
+          <a class="link-btn" target="_blank" rel="noopener" href="https://github.com/SoyBeanMilkx" title="GitHub"><i class="fa-brands fa-github"></i></a>
+         
+      </div>  
+    </div>
+  </div>
+</div>
+
+  
+  <div class="sticky">
+    
+      
+
+
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Categories</h3>
+      <div class="category-box">
+            <a class="category-link" href="/categories/Android/">
+                Android
+                <div class="category-count">9</div>
+            </a>
+        
+            <a class="category-link" href="/categories/Life/">
+                Life
+                <div class="category-count">1</div>
+            </a>
+        
+            <a class="category-link" href="/categories/NeuralNetwork/">
+                NeuralNetwork
+                <div class="category-count">1</div>
+            </a>
+        </div>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Tags</h3>
+      <ul class="widget-tag-list" itemprop="keywords"><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/CV/" rel="tag">CV</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/MPL/" rel="tag">MPL</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/elf/" rel="tag">elf</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/encryption/" rel="tag">encryption</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/env-check/" rel="tag">env_check</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/frida/" rel="tag">frida</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/idea/" rel="tag">idea</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/inlinehook/" rel="tag">inlinehook</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/kernel/" rel="tag">kernel</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/linker/" rel="tag">linker</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/native/" rel="tag">native</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/native-camera/" rel="tag">native camera</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/photo/" rel="tag">photo</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/systemui/" rel="tag">systemui</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/xposed/" rel="tag">xposed</a></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Archives</h3>
+      
+      
+        <a class="archive-link" href="/archives/2025/07 ">
+          July 2025 
+          <div class="archive-count">1 </div>
+        </a>
+      
+        <a class="archive-link" href="/archives/2025/06 ">
+          June 2025 
+          <div class="archive-count">1 </div>
+        </a>
+      
+        <a class="archive-link" href="/archives/2025/05 ">
+          May 2025 
+          <div class="archive-count">1 </div>
+        </a>
+      
+        <a class="archive-link" href="/archives/2025/04 ">
+          April 2025 
+          <div class="archive-count">1 </div>
+        </a>
+      
+        <a class="archive-link" href="/archives/2025/03 ">
+          March 2025 
+          <div class="archive-count">2 </div>
+        </a>
+      
+        <a class="archive-link" href="/archives/2024/12 ">
+          December 2024 
+          <div class="archive-count">5 </div>
+        </a>
+      
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Recent Posts</h3>
+      <ul>
+        
+          <a class="recent-link" href="/2025/07/12/InjectSo/" title="Andoird平台的so注入" >
+            <div class="recent-link-text">
+              Andoird平台的so注入
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2025/06/15/CustomLinker/" title="自定义Linker与SO加固" >
+            <div class="recent-link-text">
+              自定义Linker与SO加固
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2025/05/16/Dobby/" title="Dobby框架使用" >
+            <div class="recent-link-text">
+              Dobby框架使用
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2025/04/16/ReReadLinker/" title="Linker加载so流程" >
+            <div class="recent-link-text">
+              Linker加载so流程
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2025/03/26/HookSystemUi/" title="定位SystemUi控件的普适方法" >
+            <div class="recent-link-text">
+              定位SystemUi控件的普适方法
+            </div>
+          </a>
+        
+      </ul>
+    </div>
+  </div>
+
+    
+  </div>
+</sidebar>
+    </div>
+    <div id="content-body">
+       
+
+
+<article id="post-InjectSo" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  
+    
+   
+  <div class="article-inner">
+    <div class="article-main">
+      <header class="article-header">
+        
+<div class="main-title-bar">
+  <div class="main-title-dot"></div>
+  
+    
+      <h1 class="p-name article-title" itemprop="headline name">
+        Andoird平台的so注入
+      </h1>
+    
+  
+</div>
+
+        <div class='meta-info-bar'>
+          <div class="meta-info">
+  <time class="dt-published" datetime="2025-07-12T08:19:10.000Z" itemprop="datePublished">2025-07-12</time>
+</div>
+          <div class="need-seperator meta-info">
+            <div class="meta-cate-flex">
+  
+  <a class="meta-cate-link" href="/categories/Android/">Android</a>
+   
+</div>
+  
+          </div>
+          <div class="wordcount need-seperator meta-info">
+            7.8k words 
+          </div>
+        </div>
+        
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/elf/" rel="tag">elf</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/kernel/" rel="tag">kernel</a></li></ul>
+
+      </header>
+      <div class="e-content article-entry" itemprop="articleBody">
+        
+          <h1 id="android平台的so注入"><a href="#android平台的so注入" class="headerlink" title="android平台的so注入"></a>android平台的so注入</h1><p>前言：由于安卓的进程隔离机制，我们在hook或操作其他进程时，往往需要先把so注入到目标进程</p>
+<h2 id="0x01-什么是so注入"><a href="#0x01-什么是so注入" class="headerlink" title="0x01 什么是so注入"></a>0x01 什么是so注入</h2><p>一句话概括下来就是 <code>把自己的so加载到目标进程的地址空间</code></p>
+<h2 id="0x02-主流的注入方式"><a href="#0x02-主流的注入方式" class="headerlink" title="0x02 主流的注入方式"></a>0x02 主流的注入方式</h2><p>据我所知，目前只有两种：</p>
+<ol>
+<li>注入zygote进程</li>
+<li>通过ptrace直接注入目标进程</li>
+</ol>
+<p>先来聊聊第一点吧，我们知道安卓中所有应用进程都<code>fork</code>自<code>zygote</code>进程，所以直接把so注入zygote进程，app在启动时会fork zygote，从而达到注入的目。那zygisk是如何注入进zygote进程的呢，其实也是通过<code>ptrace</code>哈哈哈。所以写zygisk模块可以轻松帮我们注入自己的so。同理，用xposed插件也可以，而且更简单。这里不细说，我们主要聊一聊第二种方式</p>
+<h2 id="0x03-如何使用ptrace注入so"><a href="#0x03-如何使用ptrace注入so" class="headerlink" title="0x03 如何使用ptrace注入so"></a>0x03 如何使用ptrace注入so</h2><p>既然要使用ptrace，那么我们就得先知道ptrace是什么东西</p>
+<h3 id="0x03-1-什么是ptrace"><a href="#0x03-1-什么是ptrace" class="headerlink" title="0x03.1 什么是ptrace"></a>0x03.1 什么是ptrace</h3><p>ptrace是Linux内核提供的一种进程跟踪和调试工具。通过ptrace，注入进程可以附加到目标进程，读取或修改其寄存器和内存状态。本项目利用PTRACE_ATTACH附加目标进程、PTRACE_GETREGSET和PTRACE_SETREGSET操作寄存器，以及PTRACE_PEEKDATA和PTRACE_POKEDATA读写内存，这些功能为我们后续远程调用目标进程里的函数奠定了基础</p>
+<h3 id="0x03-2-使用ptrace注入so"><a href="#0x03-2-使用ptrace注入so" class="headerlink" title="0x03.2 使用ptrace注入so"></a>0x03.2 使用ptrace注入so</h3><p>知道了ptrace是干什么的，现在就能来注入so了。既然要把自己的so塞到目标进程里，那么直接远程调用对应进程的dlopen加载我们自己的so不就好了吗~。这就是我们的终极目标了</p>
+<h4 id="那我们就先来实现一下远程调用："><a href="#那我们就先来实现一下远程调用：" class="headerlink" title="那我们就先来实现一下远程调用："></a>那我们就先来实现一下远程调用：</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">ProcessUtils::SetupRemoteCall</span><span class="params">(RemoteCallContext* ctx, <span class="type">uint64_t</span> func_addr,</span></span></span><br><span class="line"><span class="params"><span class="function">                                   <span class="type">const</span> std::vector&lt;<span class="type">uint64_t</span>&gt;&amp; args)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 复制原始寄存器</span></span><br><span class="line">    ctx-&gt;regs = ctx-&gt;orig_regs;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 设置栈指针 - 确保16字节对齐</span></span><br><span class="line">    ctx-&gt;regs.sp = (ctx-&gt;orig_regs.sp - <span class="number">0x100</span>) &amp; ~<span class="number">0xF</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 设置参数（ARM64前8个参数通过x0-x7传递）</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">size_t</span> i = <span class="number">0</span>; i &lt; args.<span class="built_in">size</span>() &amp;&amp; i &lt; <span class="number">8</span>; i++) &#123;</span><br><span class="line">        ctx-&gt;regs.regs[i] = args[i];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果参数超过8个，需要压栈</span></span><br><span class="line">    <span class="keyword">if</span> (args.<span class="built_in">size</span>() &gt; <span class="number">8</span>) &#123;</span><br><span class="line">        MemoryUtils memory_utils;</span><br><span class="line">        <span class="type">uint64_t</span> stack_addr = ctx-&gt;regs.sp;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">size_t</span> i = <span class="number">8</span>; i &lt; args.<span class="built_in">size</span>(); i++) &#123;</span><br><span class="line">            <span class="keyword">if</span> (!memory_utils.<span class="built_in">WriteProcessMemory</span>(ctx-&gt;pid, stack_addr, &amp;args[i], <span class="built_in">sizeof</span>(<span class="type">uint64_t</span>))) &#123;</span><br><span class="line">                <span class="built_in">LOGE</span>(<span class="string">&quot;Failed to write stack argument %zu&quot;</span>, i);</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            stack_addr += <span class="built_in">sizeof</span>(<span class="type">uint64_t</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 设置PC指向目标函数</span></span><br><span class="line">    ctx-&gt;regs.pc = func_addr;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 设置返回地址为0，这样函数返回时会触发SIGSEGV</span></span><br><span class="line">    ctx-&gt;regs.regs[<span class="number">30</span>] = <span class="number">0</span>;  <span class="comment">// x30是链接寄存器(LR)</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;Setting up remote call: PC=0x%lx, SP=0x%lx&quot;</span>, ctx-&gt;regs.pc, ctx-&gt;regs.sp);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">SetRegisters</span>(ctx-&gt;pid, &amp;ctx-&gt;regs);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>原理就是通过设置pc(程序计数器)指向目标函数的地址。比如我们要远程调用dlopen，就得先拿到dlopen的地址，然后将参数写入对应寄存器，再修改pc指针指向dlopen的地址即可</p>
+<h4 id="现在远程调用是解决了，该解决dlopen的地址问题了："><a href="#现在远程调用是解决了，该解决dlopen的地址问题了：" class="headerlink" title="现在远程调用是解决了，该解决dlopen的地址问题了："></a>现在远程调用是解决了，该解决dlopen的地址问题了：</h4><p>我们知道，内存中的函数地址是由基地址(函数所在的so的起始地址)+偏移地址(函数相对于so的偏移)确定的，而同一个so的函数在不同进程里和在磁盘中的偏移是一样的。所以我们有两种办法拿到函数的真实地址(准确来说是相对于so的偏移地址)</p>
+<ol>
+<li>直接解析磁盘文件，比如dlopen函数，我们可以解析磁盘里的libc.so，找到dlopen的偏移，然后加上基地址，就是真实地址了，即 target_real_addr = target_base + offset</li>
+<li>在自己的进程中dlopen目标函数所在的so，然后使用dlsym查找，但是这里dlsym查找到的是对应函数在自己进程的绝对地址，所以需要额外的计算，即 target_real_addr = dlsym_res - my_base + target_base，这种方式就无需解析elf了，更简单实用</li>
+</ol>
+<p>获取基地址就没啥好说的了，用户层直接读/proc/{pid}/maps就行了</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">uint64_t</span> <span class="title">ProcessUtils::GetModuleBase</span><span class="params">(<span class="type">pid_t</span> pid, <span class="type">const</span> std::string&amp; module_name)</span> </span>&#123;</span><br><span class="line">        <span class="type">char</span> maps_path[<span class="number">256</span>];</span><br><span class="line">        <span class="built_in">snprintf</span>(maps_path, <span class="built_in">sizeof</span>(maps_path), <span class="string">&quot;/proc/%d/maps&quot;</span>, pid);</span><br><span class="line"></span><br><span class="line">        <span class="built_in">LOGD</span>(<span class="string">&quot;GetModuleBase: pid=%d, module=%s&quot;</span>, pid, module_name.<span class="built_in">c_str</span>());</span><br><span class="line"></span><br><span class="line">        <span class="function">std::ifstream <span class="title">maps</span><span class="params">(maps_path)</span></span>;</span><br><span class="line">        <span class="keyword">if</span> (!maps.<span class="built_in">is_open</span>()) &#123;</span><br><span class="line">            <span class="built_in">LOGE</span>(<span class="string">&quot;Failed to open %s: %s&quot;</span>, maps_path, <span class="built_in">strerror</span>(errno));</span><br><span class="line">            <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        std::string line;</span><br><span class="line">        <span class="type">bool</span> found = <span class="literal">false</span>;</span><br><span class="line">        <span class="keyword">while</span> (std::<span class="built_in">getline</span>(maps, line)) &#123;</span><br><span class="line">            <span class="keyword">if</span> (line.<span class="built_in">find</span>(module_name) != std::string::npos &amp;&amp;</span><br><span class="line">                line.<span class="built_in">find</span>(<span class="string">&quot; r-xp &quot;</span>) != std::string::npos) &#123;  <span class="comment">// 只查找可执行段</span></span><br><span class="line">                <span class="comment">// 解析基址</span></span><br><span class="line">                <span class="type">uint64_t</span> base;</span><br><span class="line">                <span class="keyword">if</span> (<span class="built_in">sscanf</span>(line.<span class="built_in">c_str</span>(), <span class="string">&quot;%lx&quot;</span>, &amp;base) == <span class="number">1</span>) &#123;</span><br><span class="line">                    maps.<span class="built_in">close</span>();</span><br><span class="line">                    <span class="built_in">LOGD</span>(<span class="string">&quot;  Found module %s at base 0x%lx&quot;</span>, module_name.<span class="built_in">c_str</span>(), base);</span><br><span class="line">                    <span class="built_in">LOGD</span>(<span class="string">&quot;  Map line: %s&quot;</span>, line.<span class="built_in">c_str</span>());</span><br><span class="line">                    <span class="keyword">return</span> base;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        maps.<span class="built_in">close</span>();</span><br><span class="line">        <span class="built_in">LOGD</span>(<span class="string">&quot;  Module %s not found in process %d&quot;</span>, module_name.<span class="built_in">c_str</span>(), pid);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">uint64_t</span> <span class="title">Injector::GetRemoteAddress</span><span class="params">(<span class="type">pid_t</span> pid, <span class="type">const</span> std::string&amp; module_name,</span></span></span><br><span class="line"><span class="params"><span class="function">                                        <span class="type">const</span> std::string&amp; func_name)</span> </span>&#123;</span><br><span class="line">        <span class="built_in">LOGD</span>(<span class="string">&quot;GetRemoteAddress: module=%s, function=%s&quot;</span>, module_name.<span class="built_in">c_str</span>(), func_name.<span class="built_in">c_str</span>());</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 获取目标进程中的模块基址</span></span><br><span class="line">        <span class="type">uint64_t</span> remote_base = process_utils_.<span class="built_in">GetModuleBase</span>(pid, module_name);</span><br><span class="line">        <span class="keyword">if</span> (remote_base == <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="built_in">LOGD</span>(<span class="string">&quot;  Module %s not found in process %d&quot;</span>, module_name.<span class="built_in">c_str</span>(), pid);</span><br><span class="line">            <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 获取本地进程中的模块基址</span></span><br><span class="line">        <span class="type">uint64_t</span> local_base = process_utils_.<span class="built_in">GetModuleBase</span>(<span class="built_in">getpid</span>(), module_name);</span><br><span class="line">        <span class="keyword">if</span> (local_base == <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="built_in">LOGD</span>(<span class="string">&quot;  Module %s not found in local process&quot;</span>, module_name.<span class="built_in">c_str</span>());</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 对于loader模块，尝试动态加载</span></span><br><span class="line">            <span class="keyword">if</span> (module_name.<span class="built_in">find</span>(<span class="string">&quot;yuuki_transit&quot;</span>) != std::string::npos ||</span><br><span class="line">                module_name == LOADER_PATH) &#123;</span><br><span class="line">                <span class="built_in">LOGD</span>(<span class="string">&quot;  Trying to load loader module locally to get function offset&quot;</span>);</span><br><span class="line"></span><br><span class="line">                <span class="type">void</span>* handle = <span class="built_in">dlopen</span>(LOADER_PATH, RTLD_NOW | RTLD_LOCAL);</span><br><span class="line">                <span class="keyword">if</span> (handle) &#123;</span><br><span class="line">                    <span class="type">void</span>* func = <span class="built_in">dlsym</span>(handle, func_name.<span class="built_in">c_str</span>());</span><br><span class="line">                    <span class="keyword">if</span> (func) &#123;</span><br><span class="line">                        <span class="comment">// 再次获取本地基址</span></span><br><span class="line">                        local_base = process_utils_.<span class="built_in">GetModuleBase</span>(<span class="built_in">getpid</span>(), <span class="string">&quot;yuuki_transit.so&quot;</span>);</span><br><span class="line">                        <span class="keyword">if</span> (local_base == <span class="number">0</span>) &#123;</span><br><span class="line">                            local_base = process_utils_.<span class="built_in">GetModuleBase</span>(<span class="built_in">getpid</span>(), LOADER_PATH);</span><br><span class="line">                        &#125;</span><br><span class="line"></span><br><span class="line">                        <span class="keyword">if</span> (local_base != <span class="number">0</span>) &#123;</span><br><span class="line">                            <span class="type">uint64_t</span> offset = (<span class="type">uint64_t</span>)func - local_base;</span><br><span class="line">                            <span class="type">uint64_t</span> remote_addr = remote_base + offset;</span><br><span class="line">                            <span class="built_in">dlclose</span>(handle);</span><br><span class="line">                            <span class="built_in">LOGD</span>(<span class="string">&quot;  Found %s at offset 0x%lx, remote addr: 0x%lx&quot;</span>,</span><br><span class="line">                                 func_name.<span class="built_in">c_str</span>(), offset, remote_addr);</span><br><span class="line">                            <span class="keyword">return</span> remote_addr;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="built_in">dlclose</span>(handle);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+<h4 id="写入so路径："><a href="#写入so路径：" class="headerlink" title="写入so路径："></a>写入so路径：</h4><p>值得注意的是，我们在使用dlopen的时候需要传入so的路径，这个值是一个字符串，更准确的来讲，dlopen接收到的字符串的首地址。所以我们需要远程把so的路径写入到目标进程中。我们可以借助ptrace的PTRACE_POKEDATA实现写入，在此之前，我们得获取一块稳定已知的可写内存，所以还需要远程调用一次mmap，远程调用函数的逻辑和上面一样，直接用就行</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">MemoryUtils::WriteWord</span><span class="params">(<span class="type">pid_t</span> pid, <span class="type">uint64_t</span> addr, <span class="type">long</span> value)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">ptrace</span>(PTRACE_POKEDATA, pid, addr, value) == <span class="number">-1</span>) &#123;</span><br><span class="line">        <span class="built_in">LOGE</span>(<span class="string">&quot;PTRACE_POKEDATA failed at 0x%lx: %s&quot;</span>, addr, <span class="built_in">strerror</span>(errno));</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">MemoryUtils::WriteProcessMemory</span><span class="params">(<span class="type">pid_t</span> pid, <span class="type">uint64_t</span> addr, <span class="type">const</span> <span class="type">void</span>* buf, <span class="type">size_t</span> size)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;WriteProcessMemory: pid=%d, addr=0x%lx, size=%zu&quot;</span>, pid, addr, size);</span><br><span class="line"></span><br><span class="line">    <span class="type">const</span> <span class="type">uint8_t</span>* src = (<span class="type">const</span> <span class="type">uint8_t</span>*)buf;</span><br><span class="line">    <span class="type">size_t</span> remaining = size;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (remaining &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="type">size_t</span> to_write = (remaining &gt; <span class="built_in">sizeof</span>(<span class="type">long</span>)) ? <span class="built_in">sizeof</span>(<span class="type">long</span>) : remaining;</span><br><span class="line"></span><br><span class="line">        <span class="type">long</span> data = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">if</span> (to_write &lt; <span class="built_in">sizeof</span>(<span class="type">long</span>)) &#123;</span><br><span class="line">            <span class="comment">// 需要先读取原始数据，保持未修改的字节</span></span><br><span class="line">            <span class="keyword">if</span> (!<span class="built_in">ReadWord</span>(pid, addr, &amp;data)) &#123;</span><br><span class="line">                <span class="built_in">LOGE</span>(<span class="string">&quot;  Failed to read original data at 0x%lx&quot;</span>, addr);</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="built_in">memcpy</span>(&amp;data, src, to_write);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (!<span class="built_in">WriteWord</span>(pid, addr, data)) &#123;</span><br><span class="line">            <span class="built_in">LOGE</span>(<span class="string">&quot;  Failed to write at 0x%lx&quot;</span>, addr);</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        src += to_write;</span><br><span class="line">        addr += to_write;</span><br><span class="line">        remaining -= to_write;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;  Successfully wrote %zu bytes&quot;</span>, size);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="selinux模式切换："><a href="#selinux模式切换：" class="headerlink" title="selinux模式切换："></a>selinux模式切换：</h4><p>这样主要的逻辑就全都实现了，剩下的就是处理selinux相关代码，通过修改<code>/sys/fs/selinux/enforce</code>文件的值实现enforce和permissive模式的切换</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">SELinuxUtils::SetEnforcing</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">LOGI</span>(<span class="string">&quot;Setting SELinux to enforcing mode&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">SetEnforceStatus</span>(<span class="number">1</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">SELinuxUtils::SetPermissive</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">LOGI</span>(<span class="string">&quot;Setting SELinux to permissive mode&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">SetEnforceStatus</span>(<span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">SELinuxUtils::GetEnforceStatus</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;Checking SELinux enforce status...&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="function">std::ifstream <span class="title">enforce_file</span><span class="params">(<span class="string">&quot;/sys/fs/selinux/enforce&quot;</span>)</span></span>;</span><br><span class="line">    <span class="keyword">if</span> (!enforce_file.<span class="built_in">is_open</span>()) &#123;</span><br><span class="line">        <span class="built_in">LOGD</span>(<span class="string">&quot;  /sys/fs/selinux/enforce not found, trying old path...&quot;</span>);</span><br><span class="line">        <span class="comment">// 尝试旧路径</span></span><br><span class="line">        enforce_file.<span class="built_in">open</span>(<span class="string">&quot;/selinux/enforce&quot;</span>);</span><br><span class="line">        <span class="keyword">if</span> (!enforce_file.<span class="built_in">is_open</span>()) &#123;</span><br><span class="line">            <span class="built_in">LOGD</span>(<span class="string">&quot;  SELinux appears to be disabled&quot;</span>);</span><br><span class="line">            <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> status;</span><br><span class="line">    enforce_file &gt;&gt; status;</span><br><span class="line">    enforce_file.<span class="built_in">close</span>();</span><br><span class="line"></span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;  SELinux enforce status: %d (%s)&quot;</span>, status,</span><br><span class="line">         status == <span class="number">1</span> ? <span class="string">&quot;enforcing&quot;</span> : status == <span class="number">0</span> ? <span class="string">&quot;permissive&quot;</span> : <span class="string">&quot;unknown&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> status;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">SELinuxUtils::SetEnforceStatus</span><span class="params">(<span class="type">int</span> status)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 需要root权限</span></span><br><span class="line">    <span class="type">int</span> fd = <span class="built_in">open</span>(<span class="string">&quot;/sys/fs/selinux/enforce&quot;</span>, O_WRONLY);</span><br><span class="line">    <span class="keyword">if</span> (fd &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="comment">// 尝试旧路径</span></span><br><span class="line">        fd = <span class="built_in">open</span>(<span class="string">&quot;/selinux/enforce&quot;</span>, O_WRONLY);</span><br><span class="line">        <span class="keyword">if</span> (fd &lt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="built_in">LOGE</span>(<span class="string">&quot;Failed to open SELinux enforce file: %s&quot;</span>, <span class="built_in">strerror</span>(errno));</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">char</span> status_str[<span class="number">2</span>];</span><br><span class="line">    <span class="built_in">snprintf</span>(status_str, <span class="built_in">sizeof</span>(status_str), <span class="string">&quot;%d&quot;</span>, status);</span><br><span class="line"></span><br><span class="line">    <span class="type">ssize_t</span> written = <span class="built_in">write</span>(fd, status_str, <span class="number">1</span>);</span><br><span class="line">    <span class="built_in">close</span>(fd);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (written != <span class="number">1</span>) &#123;</span><br><span class="line">        <span class="built_in">LOGE</span>(<span class="string">&quot;Failed to write SELinux enforce status: %s&quot;</span>, <span class="built_in">strerror</span>(errno));</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">LOGI</span>(<span class="string">&quot;SELinux enforce status set to %d&quot;</span>, status);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="0x04-小结"><a href="#0x04-小结" class="headerlink" title="0x04 小结"></a>0x04 小结</h2><p>这只是实现了最简单最基础的attach模式so注入，会留下痕迹，虽然痕迹不多，但是都比较致命，基本上有检测的app注入进去就会挂掉。spawn模式下一次再介绍吧，至于隐藏痕迹，我感觉用户层也没啥好隐藏的，Memory Remapping依然会带来新的检测点，处理solist和maps里注入so的路径完全可以通过自定义linker来加载规避掉，但这会带来较差的兼容性和比较大的工程量。最简单的就是进到内核层操作seq_file来处理maps里的信息，但是我感觉只要路径正常，so名称随机，maps和solist不处理也没啥问题，但是dlopen只能加载那几个路径下的so哈哈哈哈</p>
+
+        
+      </div>
+
+         
+    </div>
+    
+     
+  </div>
+  
+    
+<nav id="article-nav">
+  <a class="article-nav-btn left  disabled "
+     >
+    <i class="fa-solid fa-angle-left"></i>
+    <p class="title-text">
+        
+    </p>
+  </a>
+  <a class="article-nav-btn right "
+    
+      href="/2025/06/15/CustomLinker/"
+      title="自定义Linker与SO加固"
+     >
+
+    <p class="title-text">
+      
+        自定义Linker与SO加固
+        
+    </p>
+    <i class="fa-solid fa-angle-right"></i>
+  </a>
+</nav>
+
+
+  
+</article>
+
+
+
+
+
+    </div>
+    <div id="footer-wrapper">
+      <footer id="footer" style="text-align: center;">
+  <div id="footer-info" class="inner">
+    <p>到底了</p>
+    <p>
+      &copy; 2025 Yuuki
+    </p>
+  </div>
+</footer>
+    </div>
+    <div class="back-to-top-wrapper">
+    <button id="back-to-top-btn" class="back-to-top-btn hide" onclick="topFunction()">
+        <i class="fa-solid fa-angle-up"></i>
+    </button>
+</div>
+
+<script>
+    function topFunction() {
+        window.scroll({ top: 0, behavior: 'smooth' });
+    }
+    let btn = document.getElementById('back-to-top-btn');
+    function scrollFunction() {
+        if (document.body.scrollTop > 600 || document.documentElement.scrollTop > 600) {
+            btn.classList.remove('hide')
+        } else {
+            btn.classList.add('hide')
+        }
+    }
+    window.onscroll = function() {
+        scrollFunction();
+    }
+</script>
+
+  </div>
+  <script src="/js/light-dark-switch.js"></script>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"left","width":220,"height":460,"hOffset":0,"vOffset":-100},"mobile":{"show":true},"react":{"opacity":0.85},"log":false});</script></body>
+</html>

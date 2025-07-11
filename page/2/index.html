@@ -140,7 +140,7 @@
       <div class="category-box">
             <a class="category-link" href="/categories/Android/">
                 Android
-                <div class="category-count">9</div>
+                <div class="category-count">10</div>
             </a>
         
             <a class="category-link" href="/categories/Life/">
@@ -176,7 +176,7 @@
       
         <a class="archive-link" href="/archives/2025/07 ">
           July 2025 
-          <div class="archive-count">1 </div>
+          <div class="archive-count">2 </div>
         </a>
       
         <a class="archive-link" href="/archives/2025/06 ">
@@ -215,7 +215,13 @@
       <h3 class="widget-title">Recent Posts</h3>
       <ul>
         
-          <a class="recent-link" href="/2025/07/12/InjectSo/" title="Andoird平台的so注入" >
+          <a class="recent-link" href="/2025/07/11/InjectSo2/" title="注入篇二 spawn模式的实现" >
+            <div class="recent-link-text">
+              注入篇二 spawn模式的实现
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2025/07/01/InjectSo/" title="Andoird平台的so注入" >
             <div class="recent-link-text">
               Andoird平台的so注入
             </div>
@@ -239,12 +245,6 @@
             </div>
           </a>
         
-          <a class="recent-link" href="/2025/03/26/HookSystemUi/" title="定位SystemUi控件的普适方法" >
-            <div class="recent-link-text">
-              定位SystemUi控件的普适方法
-            </div>
-          </a>
-        
       </ul>
     </div>
   </div>
@@ -255,6 +255,82 @@
     </div>
     <div id="content-body">
       
+   
+
+
+<article id="post-MobileMonitor" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+   
+  <div class="article-inner">
+    <div class="article-main">
+      <header class="article-header">
+        
+<div class="main-title-bar">
+  <div class="main-title-dot"></div>
+  
+    
+      <h1 itemprop="name">
+        <a class="p-name article-title" href="/2024/12/25/MobileMonitor/">旧手机改监控</a>
+      </h1>
+    
+  
+</div>
+
+        <div class='meta-info-bar'>
+          <div class="meta-info">
+  <time class="dt-published" datetime="2024-12-25T14:39:42.000Z" itemprop="datePublished">2024-12-25</time>
+</div>
+          <div class="need-seperator meta-info">
+            <div class="meta-cate-flex">
+  
+  <a class="meta-cate-link" href="/categories/Android/">Android</a>
+   
+</div>
+  
+          </div>
+          <div class="wordcount need-seperator meta-info">
+            38k words 
+          </div>
+        </div>
+        
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/CV/" rel="tag">CV</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/native-camera/" rel="tag">native camera</a></li></ul>
+
+      </header>
+      <div class="e-content article-entry" itemprop="articleBody">
+        
+          <div class="truncate-text">
+            
+              旧手机改监控前言： 暑假赋闲在家，有时候几个伯伯会来喊我有事情，我在自己的房间放歌总是听不见，这让他们很烦恼，于是就想着自己做一个监控，正好让爸爸妈妈也能有空看看家门口。
+由于需要在有人出现的时候对我发送提醒，所以这里需要引入物体识别。这里为了方便，直接用开源的YoloV8了。接下来就是硬件的选择，最先考虑的是Esp32-cam，因为它很便宜，IDF库用起来也不是很麻烦。但是它的算力太垃圾了，传输视频到是可以，但是推理模型就显得力不从心了，而且主流的模型推理库似乎没有适配Risc-V架构的，这样要实现物体检测就必须再搭配一个上位机，显然不符合原本的设计理念。故只好放弃ESP-32cam，从而选择了Android平台。
+Android平台能用的资源很多，更好的CPU/GPU，更丰富的外设，更舒适的开发环境，而且旧手机不用钱，能干很多事情。(我觉得旧手机就是最屌的嵌入式设备，吊打其他开发板，搭载855Soc的手机现在200-300就能买到嘻嘻)
+那么接下来就是实现Camera和Yolo推理
+Camera使用的camera2 api，在so层实现，写完之后写Yolo推理的时候才发现，有...
+            
+          </div>
+        
+      </div>
+
+         
+    </div>
+    
+     
+    <a class="right-panel  non-pic  "
+      
+      href="/2024/12/25/MobileMonitor/" 
+    >
+       
+      <i class="fa-solid fa-angle-right non-pic"></i>
+       
+    </a>
+     
+  </div>
+  
+</article>
+
+
+
+
+
+
    
 
 
@@ -383,5 +459,20 @@ IDEAS:猪比课设怎么跟沙比一样，天天早八还要点名，我燥密�
 
   </div>
   <script src="/js/light-dark-switch.js"></script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
 <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"left","width":220,"height":460,"hOffset":0,"vOffset":-100},"mobile":{"show":true},"react":{"opacity":0.85},"log":false});</script></body>
 </html>

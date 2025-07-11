@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+
+
+<html theme="dark" showBanner="true" hasBanner="true" > 
+<link href="https://cdn.staticfile.org/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet">
+<link href="https://cdn.staticfile.org/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet">
+<link href="https://cdn.staticfile.org/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet">
+<script src="/js/color.global.min.js" ></script>
+<script src="/js/load-settings.js" ></script>
+<head>
+  <meta charset="utf-8">
+  
+  
+  
+
+  
+  <title>注入篇二 spawn模式的实现 | Yuuki</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <link rel="preload" href="/css/fonts/Roboto-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+  <link rel="preload" href="/css/fonts/Roboto-Bold.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+
+  <meta name="description" content="注入篇二 spawn模式的实现前言：在上一篇文章中大概解释了attach模式注入so的实现思路，但是实战中spawn模式注入也是很常用的 0x01 什么是spawn注入模式我的理解是 在目标进程启动时对其进行注入。这可以帮助我们绕过部分反调试，同时可以监听一些初始化函数 0x02 大致的实现思路spawn翻译过来是产卵的意思，刚接触frida的时候我不理解spawn这个单词和注入这个操作之间的联系">
+<meta property="og:type" content="article">
+<meta property="og:title" content="注入篇二 spawn模式的实现">
+<meta property="og:url" content="http://example.com/2025/07/11/InjectSo2/index.html">
+<meta property="og:site_name" content="Yuuki">
+<meta property="og:description" content="注入篇二 spawn模式的实现前言：在上一篇文章中大概解释了attach模式注入so的实现思路，但是实战中spawn模式注入也是很常用的 0x01 什么是spawn注入模式我的理解是 在目标进程启动时对其进行注入。这可以帮助我们绕过部分反调试，同时可以监听一些初始化函数 0x02 大致的实现思路spawn翻译过来是产卵的意思，刚接触frida的时候我不理解spawn这个单词和注入这个操作之间的联系">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2025-07-11T08:19:10.000Z">
+<meta property="article:modified_time" content="2025-07-11T08:56:56.694Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="kernel">
+<meta property="article:tag" content="elf">
+<meta name="twitter:card" content="summary">
+  
+  
+    <link rel="shortcut icon" href="/site_img/icon.jpg">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+  
+  
+    
+<div id="banner" class="">
+  <img src="/site_img/backg.png" itemprop="image">
+  <div id="banner-dim"></div>
+</div>
+ 
+   
+  <div id="main-grid" class="  ">
+    <div id="nav" class=""  >
+      <navbar id="navbar">
+  <nav id="title-nav">
+    <a href="/">
+      <div id="vivia-logo">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+      <div>Yuuki </div>
+    </a>
+  </nav>
+  <nav id="main-nav">
+    
+      <a class="main-nav-link" href="/">Home</a>
+    
+      <a class="main-nav-link" href="/archives">Archives</a>
+    
+      <a class="main-nav-link" href="/about">About</a>
+    
+  </nav>
+  <nav id="sub-nav">
+    <a id="theme-btn" class="nav-icon">
+      <span class="light-mode-icon"><svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M438.5-829.913v-48q0-17.452 11.963-29.476 11.964-12.024 29.326-12.024 17.363 0 29.537 12.024t12.174 29.476v48q0 17.452-11.963 29.476-11.964 12.024-29.326 12.024-17.363 0-29.537-12.024T438.5-829.913Zm0 747.826v-48q0-17.452 11.963-29.476 11.964-12.024 29.326-12.024 17.363 0 29.537 12.024t12.174 29.476v48q0 17.452-11.963 29.476-11.964 12.024-29.326 12.024-17.363 0-29.537-12.024T438.5-82.087ZM877.913-438.5h-48q-17.452 0-29.476-11.963-12.024-11.964-12.024-29.326 0-17.363 12.024-29.537t29.476-12.174h48q17.452 0 29.476 11.963 12.024 11.964 12.024 29.326 0 17.363-12.024 29.537T877.913-438.5Zm-747.826 0h-48q-17.452 0-29.476-11.963-12.024-11.964-12.024-29.326 0-17.363 12.024-29.537T82.087-521.5h48q17.452 0 29.476 11.963 12.024 11.964 12.024 29.326 0 17.363-12.024 29.537T130.087-438.5Zm660.174-290.87-34.239 32q-12.913 12.674-29.565 12.174-16.653-.5-29.327-13.174-12.674-12.673-12.554-28.826.12-16.152 12.794-28.826l33-35q12.913-12.674 30.454-12.674t30.163 12.847q12.709 12.846 12.328 30.826-.38 17.98-13.054 30.653ZM262.63-203.978l-32 34q-12.913 12.674-30.454 12.674t-30.163-12.847q-12.709-12.846-12.328-30.826.38-17.98 13.054-30.653l33.239-31q12.913-12.674 29.565-12.174 16.653.5 29.327 13.174 12.674 12.673 12.554 28.826-.12 16.152-12.794 28.826Zm466.74 33.239-32-33.239q-12.674-12.913-12.174-29.565.5-16.653 13.174-29.327 12.673-12.674 28.826-13.054 16.152-.38 28.826 12.294l35 33q12.674 12.913 12.674 30.454t-12.847 30.163q-12.846 12.709-30.826 12.328-17.98-.38-30.653-13.054ZM203.978-697.37l-34-33q-12.674-12.913-13.174-29.945-.5-17.033 12.174-29.707t31.326-13.293q18.653-.62 31.326 13.054l32 34.239q11.674 12.913 11.174 29.565-.5 16.653-13.174 29.327-12.673 12.674-28.826 12.554-16.152-.12-28.826-12.794ZM480-240q-100 0-170-70t-70-170q0-100 70-170t170-70q100 0 170 70t70 170q0 100-70 170t-170 70Zm-.247-82q65.703 0 111.475-46.272Q637-414.544 637-480.247t-45.525-111.228Q545.95-637 480.247-637t-111.475 45.525Q323-545.95 323-480.247t45.525 111.975Q414.05-322 479.753-322ZM481-481Z"/></svg></span>
+      <span class="dark-mode-icon"><svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M480.239-116.413q-152.63 0-258.228-105.478Q116.413-327.37 116.413-480q0-130.935 77.739-227.435t206.304-125.043q43.022-9.631 63.87 10.869t3.478 62.805q-8.891 22.043-14.315 44.463-5.424 22.42-5.424 46.689 0 91.694 64.326 155.879 64.325 64.186 156.218 64.186 24.369 0 46.978-4.946 22.609-4.945 44.413-14.076 42.826-17.369 62.967 1.142 20.142 18.511 10.511 61.054Q807.174-280 712.63-198.206q-94.543 81.793-232.391 81.793Zm0-95q79.783 0 143.337-40.217 63.554-40.218 95.793-108.283-15.608 4.044-31.097 5.326-15.49 1.283-31.859.805-123.706-4.066-210.777-90.539-87.071-86.473-91.614-212.092-.24-16.369.923-31.978 1.164-15.609 5.446-30.978-67.826 32.478-108.282 96.152Q211.652-559.543 211.652-480q0 111.929 78.329 190.258 78.329 78.329 190.258 78.329ZM466.13-465.891Z"/></svg></span>
+    </a>
+    
+    <div id="nav-menu-btn" class="nav-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M177.37-252.282q-17.453 0-29.477-11.964-12.024-11.963-12.024-29.326t12.024-29.537q12.024-12.174 29.477-12.174h605.26q17.453 0 29.477 11.964 12.024 11.963 12.024 29.326t-12.024 29.537q-12.024 12.174-29.477 12.174H177.37Zm0-186.218q-17.453 0-29.477-11.963-12.024-11.964-12.024-29.326 0-17.363 12.024-29.537T177.37-521.5h605.26q17.453 0 29.477 11.963 12.024 11.964 12.024 29.326 0 17.363-12.024 29.537T782.63-438.5H177.37Zm0-186.217q-17.453 0-29.477-11.964-12.024-11.963-12.024-29.326t12.024-29.537q12.024-12.174 29.477-12.174h605.26q17.453 0 29.477 11.964 12.024 11.963 12.024 29.326t-12.024 29.537q-12.024 12.174-29.477 12.174H177.37Z"/></svg>
+    </div>
+  </nav>
+</navbar>
+<div id="nav-dropdown" class="hidden">
+  <div id="dropdown-link-list">
+    
+      <a class="nav-dropdown-link" href="/">Home</a>
+    
+      <a class="nav-dropdown-link" href="/archives">Archives</a>
+    
+      <a class="nav-dropdown-link" href="/about">About</a>
+    
+     
+    </div>
+</div>
+<script>
+  let dropdownBtn = document.getElementById("nav-menu-btn");
+  let dropdownEle = document.getElementById("nav-dropdown");
+  dropdownBtn.onclick = function() {
+    dropdownEle.classList.toggle("hidden");
+  }
+</script>
+    </div>
+    <div id="sidebar-wrapper">
+      <sidebar id="sidebar">
+  
+    <div class="widget-wrap">
+  <div class="info-card">
+    <div class="avatar">
+      
+        <image src=/site_img/icon.jpg></image>
+      
+      <div class="img-dim"></div>
+    </div>
+    <div class="info">
+      <div class="username">Yuuki </div>
+      <div class="dot"></div>
+      <div class="subtitle">不说话 装高手 </div>
+      <div class="link-list">
+        
+          <a class="link-btn" target="_blank" rel="noopener" href="https://x.com/LiYangv?t=kbZV9-LGilEE-2pg_2GBeQ&s=09" title="Twitter"><i class="fa-brands fa-twitter"></i></a>
+        
+          <a class="link-btn" target="_blank" rel="noopener" href="https://steamcommunity.com/profiles/76561199358468625/" title="Steam"><i class="fa-brands fa-steam"></i></a>
+        
+          <a class="link-btn" target="_blank" rel="noopener" href="https://github.com/SoyBeanMilkx" title="GitHub"><i class="fa-brands fa-github"></i></a>
+         
+      </div>  
+    </div>
+  </div>
+</div>
+
+  
+  <div class="sticky">
+    
+      
+
+
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Categories</h3>
+      <div class="category-box">
+            <a class="category-link" href="/categories/Android/">
+                Android
+                <div class="category-count">10</div>
+            </a>
+        
+            <a class="category-link" href="/categories/Life/">
+                Life
+                <div class="category-count">1</div>
+            </a>
+        
+            <a class="category-link" href="/categories/NeuralNetwork/">
+                NeuralNetwork
+                <div class="category-count">1</div>
+            </a>
+        </div>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Tags</h3>
+      <ul class="widget-tag-list" itemprop="keywords"><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/CV/" rel="tag">CV</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/MPL/" rel="tag">MPL</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/elf/" rel="tag">elf</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/encryption/" rel="tag">encryption</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/env-check/" rel="tag">env_check</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/frida/" rel="tag">frida</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/idea/" rel="tag">idea</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/inlinehook/" rel="tag">inlinehook</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/kernel/" rel="tag">kernel</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/linker/" rel="tag">linker</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/native/" rel="tag">native</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/native-camera/" rel="tag">native camera</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/photo/" rel="tag">photo</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/systemui/" rel="tag">systemui</a></li><li class="widget-tag-list-item"><a class="widget-tag-list-link" href="/tags/xposed/" rel="tag">xposed</a></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Archives</h3>
+      
+      
+        <a class="archive-link" href="/archives/2025/07 ">
+          July 2025 
+          <div class="archive-count">2 </div>
+        </a>
+      
+        <a class="archive-link" href="/archives/2025/06 ">
+          June 2025 
+          <div class="archive-count">1 </div>
+        </a>
+      
+        <a class="archive-link" href="/archives/2025/05 ">
+          May 2025 
+          <div class="archive-count">1 </div>
+        </a>
+      
+        <a class="archive-link" href="/archives/2025/04 ">
+          April 2025 
+          <div class="archive-count">1 </div>
+        </a>
+      
+        <a class="archive-link" href="/archives/2025/03 ">
+          March 2025 
+          <div class="archive-count">2 </div>
+        </a>
+      
+        <a class="archive-link" href="/archives/2024/12 ">
+          December 2024 
+          <div class="archive-count">5 </div>
+        </a>
+      
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget-wrap">
+    <div class="widget">
+      <h3 class="widget-title">Recent Posts</h3>
+      <ul>
+        
+          <a class="recent-link" href="/2025/07/11/InjectSo2/" title="注入篇二 spawn模式的实现" >
+            <div class="recent-link-text">
+              注入篇二 spawn模式的实现
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2025/07/01/InjectSo/" title="Andoird平台的so注入" >
+            <div class="recent-link-text">
+              Andoird平台的so注入
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2025/06/15/CustomLinker/" title="自定义Linker与SO加固" >
+            <div class="recent-link-text">
+              自定义Linker与SO加固
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2025/05/16/Dobby/" title="Dobby框架使用" >
+            <div class="recent-link-text">
+              Dobby框架使用
+            </div>
+          </a>
+        
+          <a class="recent-link" href="/2025/04/16/ReReadLinker/" title="Linker加载so流程" >
+            <div class="recent-link-text">
+              Linker加载so流程
+            </div>
+          </a>
+        
+      </ul>
+    </div>
+  </div>
+
+    
+  </div>
+</sidebar>
+    </div>
+    <div id="content-body">
+       
+
+
+<article id="post-InjectSo2" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  
+    
+   
+  <div class="article-inner">
+    <div class="article-main">
+      <header class="article-header">
+        
+<div class="main-title-bar">
+  <div class="main-title-dot"></div>
+  
+    
+      <h1 class="p-name article-title" itemprop="headline name">
+        注入篇二 spawn模式的实现
+      </h1>
+    
+  
+</div>
+
+        <div class='meta-info-bar'>
+          <div class="meta-info">
+  <time class="dt-published" datetime="2025-07-11T08:19:10.000Z" itemprop="datePublished">2025-07-11</time>
+</div>
+          <div class="need-seperator meta-info">
+            <div class="meta-cate-flex">
+  
+  <a class="meta-cate-link" href="/categories/Android/">Android</a>
+   
+</div>
+  
+          </div>
+          <div class="wordcount need-seperator meta-info">
+            15k words 
+          </div>
+        </div>
+        
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/elf/" rel="tag">elf</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/kernel/" rel="tag">kernel</a></li></ul>
+
+      </header>
+      <div class="e-content article-entry" itemprop="articleBody">
+        
+          <h1 id="注入篇二-spawn模式的实现"><a href="#注入篇二-spawn模式的实现" class="headerlink" title="注入篇二 spawn模式的实现"></a>注入篇二 spawn模式的实现</h1><p>前言：在<a target="_blank" rel="noopener" href="https://yuuki.cool/2025/07/12/InjectSo/">上一篇文章</a>中大概解释了attach模式注入so的实现思路，但是实战中spawn模式注入也是很常用的</p>
+<h2 id="0x01-什么是spawn注入模式"><a href="#0x01-什么是spawn注入模式" class="headerlink" title="0x01 什么是spawn注入模式"></a>0x01 什么是spawn注入模式</h2><p>我的理解是 在目标进程<strong>启动时</strong>对其进行注入。这可以帮助我们绕过部分反调试，同时可以监听一些初始化函数</p>
+<h2 id="0x02-大致的实现思路"><a href="#0x02-大致的实现思路" class="headerlink" title="0x02 大致的实现思路"></a>0x02 大致的实现思路</h2><p>spawn翻译过来是<code>产卵</code>的意思，刚接触frida的时候我不理解spawn这个单词和注入这个操作之间的联系，后来才知道这个操作是需要注入zygote的，而zygote翻译过来刚好是<code>受精卵</code>的意思，现在感觉还挺有意思的，spawn这个名字确实很恰当</p>
+<p>我们想要在进程启动时就注入，那么时机很重要，这个时机当然越早越好…吗？我们知道app进程都是由zygote进程fork而来的，fork之后才会有app进程，这里差不多就是app进程刚出生的时候了，我们在这时，把自己的so注入就可以实现上述的效果了</p>
+<h2 id="0x03-开始实现"><a href="#0x03-开始实现" class="headerlink" title="0x03 开始实现"></a>0x03 开始实现</h2><p>由于我们要hook zygote进程里的一些函数，所以首先要把hook模块注入进zygote进程，关于如何通过ptrace注入目标进程，<a target="_blank" rel="noopener" href="https://yuuki.cool/2025/07/12/InjectSo/">上一篇文章</a>已经讲的比较清晰了，这里就不过多赘述了，这里先来讲讲hook模块应该实现哪些功能吧。这里的hook框架依旧是使用dobby</p>
+<p><strong>首先要明确hook点</strong></p>
+<p>上面说了，我们是hook fork函数，所以目标so是<code>/system/lib64/libc.so</code>，查找函数地址可以先dlopen libc.so，然后再dlsym fork函数，这里dlopen是为了拿到对应so的handle，正常进程里libc.so 99%是已经被加载过的，你再打开一次也无所谓，因为linker会直接返回solist里的handle给你，不会浪费很多时间。当然也可以使用elf_utils解析磁盘上的libc.so拿到偏移，然后查找基地址两个相加得到真实的地址</p>
+<p><strong>其次编写hook函数</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">static</span> std::string <span class="title">getCurrentProcessName</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">char</span> process_name[<span class="number">64</span>] = &#123;<span class="number">0</span>&#125;;</span><br><span class="line">    <span class="type">int</span> fd = <span class="built_in">open</span>(<span class="string">&quot;/proc/self/cmdline&quot;</span>, O_RDONLY);</span><br><span class="line">    <span class="keyword">if</span> (fd != <span class="number">-1</span>) &#123;</span><br><span class="line">        <span class="type">ssize_t</span> len = <span class="built_in">read</span>(fd, process_name, <span class="built_in">sizeof</span>(process_name) - <span class="number">1</span>);</span><br><span class="line">        <span class="keyword">if</span> (len &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            process_name[len] = <span class="string">&#x27;\0&#x27;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">close</span>(fd);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> std::<span class="built_in">string</span>(process_name);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">pid_t</span> <span class="title">hooked_fork</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (in_hook_fork) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">orig_fork</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;enter fork func!&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="type">pid_t</span> result = <span class="built_in">orig_fork</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (result == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">LOGD</span>(<span class="string">&quot;enter child process&quot;</span>);</span><br><span class="line">        std::string current_process = <span class="built_in">getCurrentProcessName</span>();</span><br><span class="line">        <span class="keyword">if</span> (!current_process.<span class="built_in">empty</span>()) &#123;</span><br><span class="line">            <span class="built_in">LOGD</span>(<span class="string">&quot;Child process started: %s&quot;</span>, current_process.<span class="built_in">c_str</span>());</span><br><span class="line">            <span class="comment">//todo 然后判断进程名是否为目标进程，后续再dlopen自己的so</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我刚开始是这么写的，我觉得没啥毛病，但是一运行就有问题了，各位可以先思考一下为什么这样不行哈哈哈哈</p>
+<p>运行时输出了如下日志：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">07-09 10:52:08.046 19197 19197 I [Zygote_Hook]: enter child process</span><br><span class="line">07-09 10:52:08.047 19197 19197 I [Zygote_Hook]: Child process started: zygote64</span><br></pre></td></tr></table></figure>
+<p>子进程的进程名依然是<code>zygote64</code>，为什么会这样呢？？？其实是因为获取进程名的时机太早了，这时子进程还没初始化完全，所以获取到的名字还是父进程的</p>
+<p>为了解决这个问题，我们就得先研究一下android中app进程的进程名是如何被设置的，查阅了一番资料后得知<code>android.os.Process.setArgv0</code>函数负责设置进程名，它是一个native函数，长这样</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">android_os_Process_setArgV0</span><span class="params">(JNIEnv* env, jobject clazz, jstring name)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (name == <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="built_in">jniThrowNullPointerException</span>(env, <span class="literal">NULL</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">const</span> jchar* str = env-&gt;<span class="built_in">GetStringCritical</span>(name, <span class="number">0</span>);</span><br><span class="line">    String8 name8;</span><br><span class="line">    <span class="keyword">if</span> (str) &#123;</span><br><span class="line">        name8 = <span class="built_in">String8</span>(<span class="built_in">reinterpret_cast</span>&lt;<span class="type">const</span> <span class="type">char16_t</span>*&gt;(str),</span><br><span class="line">                        env-&gt;<span class="built_in">GetStringLength</span>(name));</span><br><span class="line">        env-&gt;<span class="built_in">ReleaseStringCritical</span>(name, str);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!name<span class="number">8.</span><span class="built_in">empty</span>()) &#123;</span><br><span class="line">        AndroidRuntime::<span class="built_in">getRuntime</span>()-&gt;<span class="built_in">setArgv0</span>(name<span class="number">8.</span><span class="built_in">c_str</span>(), <span class="literal">true</span> <span class="comment">/* setProcName */</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>它的第三个参数就是我们需要的进程名，所以我们可以在子进程中hook这个函数，当函数执行时取出参数，与我们的目标进程名作比较，如果一致，则加载我们自己的so。加载so使用dlopen就行了，但是dlopen只能从那几个路径加载，虽然本文不涉及注入痕迹的隐藏，但简单的能直接避免还是就避免一下吧。如果从app私有目录加载，那么app自己是有权限检查该路径下的文件的，不是很安全。如果从/system/lib下加载，那每次注入不同的so都需要重启手机重新挂载文件，这太麻烦了。所以还是从/data/local/tmp下加载吧，当然这个路径也不安全，但相对好一点。但如果选择这个路径，就会有新的问题。普通app进程是没办法访问这个目录的，所以dlopen肯定会失败。解决方案也比较简单，把selinux设置为宽容模式即可。那么新的问题又来了，hook代码是运行在app进程的，app进程没有权限设置selinux，这里只有Injector进程有这个权限，所以需要设计跨进程通信模块，用于在dlopen前后通知Injector模块修改selinux模式</p>
+<p><strong>设计通信模块</strong></p>
+<p>为了方便，本来想直接用信号的，因为这个通信场景本身也不复杂，但是后面写完才发现权限不够，于是又重写，这里直接用UDS。为了后续开发方便，就把模块单拎出来写了，另外两个模块共享通信模块</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;socket_comm.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/socket.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/un.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;android/log.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/stat.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;errno.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LOG_TAG <span class="string">&quot;[Socket_Comm]&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> comm &#123;</span><br><span class="line"></span><br><span class="line">    SocketServer::<span class="built_in">SocketServer</span>() : <span class="built_in">server_fd_</span>(<span class="number">-1</span>), <span class="built_in">running_</span>(<span class="literal">false</span>), <span class="built_in">background_thread_</span>(<span class="literal">nullptr</span>) &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    SocketServer::~<span class="built_in">SocketServer</span>() &#123;</span><br><span class="line">        <span class="built_in">Stop</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">SocketServer::Start</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (server_fd_ != <span class="number">-1</span>) &#123;</span><br><span class="line">            <span class="built_in">LOGE</span>(<span class="string">&quot;Server already started&quot;</span>);</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="built_in">unlink</span>(COMM_SOCKET_PATH);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 创建Unix Domain Socket</span></span><br><span class="line">        server_fd_ = <span class="built_in">socket</span>(AF_UNIX, SOCK_STREAM, <span class="number">0</span>);</span><br><span class="line">        <span class="keyword">if</span> (server_fd_ &lt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="built_in">LOGE</span>(<span class="string">&quot;Failed to create socket: %s&quot;</span>, <span class="built_in">strerror</span>(errno));</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">struct</span> <span class="title class_">sockaddr_un</span> server_addr;</span><br><span class="line">        <span class="built_in">memset</span>(&amp;server_addr, <span class="number">0</span>, <span class="built_in">sizeof</span>(server_addr));</span><br><span class="line">        server_addr.sun_family = AF_UNIX;</span><br><span class="line">        <span class="built_in">strncpy</span>(server_addr.sun_path, COMM_SOCKET_PATH, <span class="built_in">sizeof</span>(server_addr.sun_path) - <span class="number">1</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">bind</span>(server_fd_, (<span class="keyword">struct</span> sockaddr*)&amp;server_addr, <span class="built_in">sizeof</span>(server_addr)) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="built_in">LOGE</span>(<span class="string">&quot;Failed to bind socket: %s&quot;</span>, <span class="built_in">strerror</span>(errno));</span><br><span class="line">            <span class="built_in">close</span>(server_fd_);</span><br><span class="line">            server_fd_ = <span class="number">-1</span>;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 设置socket文件权限，允许所有用户访问</span></span><br><span class="line">        <span class="built_in">chmod</span>(COMM_SOCKET_PATH, <span class="number">0666</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">listen</span>(server_fd_, <span class="number">1</span>) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="built_in">LOGE</span>(<span class="string">&quot;Failed to listen on socket: %s&quot;</span>, <span class="built_in">strerror</span>(errno));</span><br><span class="line">            <span class="built_in">close</span>(server_fd_);</span><br><span class="line">            server_fd_ = <span class="number">-1</span>;</span><br><span class="line">            <span class="built_in">unlink</span>(COMM_SOCKET_PATH);</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        running_ = <span class="literal">true</span>;</span><br><span class="line">        <span class="built_in">LOGI</span>(<span class="string">&quot;Unix Domain Socket server started at %s&quot;</span>, COMM_SOCKET_PATH);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">SocketServer::Stop</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        running_ = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (server_fd_ != <span class="number">-1</span>) &#123;</span><br><span class="line">            <span class="built_in">shutdown</span>(server_fd_, SHUT_RDWR);</span><br><span class="line">            <span class="built_in">close</span>(server_fd_);</span><br><span class="line">            server_fd_ = <span class="number">-1</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="built_in">unlink</span>(COMM_SOCKET_PATH);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (background_thread_) &#123;</span><br><span class="line">            <span class="keyword">if</span> (background_thread_-&gt;<span class="built_in">joinable</span>()) &#123;</span><br><span class="line">                background_thread_-&gt;<span class="built_in">join</span>();</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">delete</span> background_thread_;</span><br><span class="line">            background_thread_ = <span class="literal">nullptr</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="built_in">LOGI</span>(<span class="string">&quot;Socket server stopped&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function">std::string <span class="title">SocketServer::WaitForMessage</span><span class="params">(<span class="type">int</span> timeout_ms)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (server_fd_ == <span class="number">-1</span>) &#123;</span><br><span class="line">            <span class="built_in">LOGE</span>(<span class="string">&quot;Server not started&quot;</span>);</span><br><span class="line">            <span class="keyword">return</span> <span class="string">&quot;&quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        fd_set readfds;</span><br><span class="line">        <span class="built_in">FD_ZERO</span>(&amp;readfds);</span><br><span class="line">        <span class="built_in">FD_SET</span>(server_fd_, &amp;readfds);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">struct</span> <span class="title class_">timeval</span>* tv_ptr = <span class="literal">nullptr</span>;</span><br><span class="line">        <span class="keyword">struct</span> <span class="title class_">timeval</span> tv;</span><br><span class="line">        <span class="keyword">if</span> (timeout_ms &gt;= <span class="number">0</span>) &#123;</span><br><span class="line">            tv.tv_sec = timeout_ms / <span class="number">1000</span>;</span><br><span class="line">            tv.tv_usec = (timeout_ms % <span class="number">1000</span>) * <span class="number">1000</span>;</span><br><span class="line">            tv_ptr = &amp;tv;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="type">int</span> ret = <span class="built_in">select</span>(server_fd_ + <span class="number">1</span>, &amp;readfds, <span class="literal">nullptr</span>, <span class="literal">nullptr</span>, tv_ptr);</span><br><span class="line">        <span class="keyword">if</span> (ret &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (ret &lt; <span class="number">0</span> &amp;&amp; errno != EINTR) &#123;</span><br><span class="line">                <span class="built_in">LOGE</span>(<span class="string">&quot;select error: %s&quot;</span>, <span class="built_in">strerror</span>(errno));</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> <span class="string">&quot;&quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">struct</span> <span class="title class_">sockaddr_un</span> client_addr;</span><br><span class="line">        <span class="type">socklen_t</span> client_len = <span class="built_in">sizeof</span>(client_addr);</span><br><span class="line">        <span class="type">int</span> client_fd = <span class="built_in">accept</span>(server_fd_, (<span class="keyword">struct</span> sockaddr*)&amp;client_addr, &amp;client_len);</span><br><span class="line">        <span class="keyword">if</span> (client_fd &lt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (errno != EINTR &amp;&amp; errno != EAGAIN) &#123;</span><br><span class="line">                <span class="built_in">LOGE</span>(<span class="string">&quot;Failed to accept connection: %s&quot;</span>, <span class="built_in">strerror</span>(errno));</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> <span class="string">&quot;&quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="type">char</span> buffer[<span class="number">256</span>] = &#123;<span class="number">0</span>&#125;;</span><br><span class="line">        <span class="type">ssize_t</span> bytes_read = <span class="built_in">recv</span>(client_fd, buffer, <span class="built_in">sizeof</span>(buffer) - <span class="number">1</span>, <span class="number">0</span>);</span><br><span class="line">        <span class="built_in">close</span>(client_fd);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (bytes_read &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            buffer[bytes_read] = <span class="string">&#x27;\0&#x27;</span>;</span><br><span class="line">            <span class="built_in">LOGI</span>(<span class="string">&quot;Received message: %s&quot;</span>, buffer);</span><br><span class="line">            <span class="keyword">return</span> std::<span class="built_in">string</span>(buffer);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="string">&quot;&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">SocketServer::RunInBackground</span><span class="params">(std::function&lt;<span class="type">void</span>(<span class="type">const</span> std::string&amp;)&gt; callback)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (background_thread_) &#123;</span><br><span class="line">            <span class="built_in">LOGE</span>(<span class="string">&quot;Background thread already running&quot;</span>);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        background_thread_ = <span class="keyword">new</span> std::<span class="built_in">thread</span>(&amp;SocketServer::AcceptLoop, <span class="keyword">this</span>, callback);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">SocketServer::AcceptLoop</span><span class="params">(std::function&lt;<span class="type">void</span>(<span class="type">const</span> std::string&amp;)&gt; callback)</span> </span>&#123;</span><br><span class="line">        <span class="built_in">LOGI</span>(<span class="string">&quot;Background accept loop started&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">while</span> (running_) &#123;</span><br><span class="line">            std::string msg = <span class="built_in">WaitForMessage</span>(<span class="number">1000</span>);</span><br><span class="line">            <span class="keyword">if</span> (!msg.<span class="built_in">empty</span>() &amp;&amp; callback) &#123;</span><br><span class="line">                <span class="built_in">callback</span>(msg);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="built_in">LOGI</span>(<span class="string">&quot;Background accept loop ended&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">SocketClient::SendMessage</span><span class="params">(<span class="type">const</span> std::string&amp; message)</span> </span>&#123;</span><br><span class="line">        <span class="type">int</span> client_fd = <span class="built_in">socket</span>(AF_UNIX, SOCK_STREAM, <span class="number">0</span>);</span><br><span class="line">        <span class="keyword">if</span> (client_fd &lt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="built_in">LOGE</span>(<span class="string">&quot;Failed to create client socket: %s&quot;</span>, <span class="built_in">strerror</span>(errno));</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">struct</span> <span class="title class_">sockaddr_un</span> server_addr;</span><br><span class="line">        <span class="built_in">memset</span>(&amp;server_addr, <span class="number">0</span>, <span class="built_in">sizeof</span>(server_addr));</span><br><span class="line">        server_addr.sun_family = AF_UNIX;</span><br><span class="line">        <span class="built_in">strncpy</span>(server_addr.sun_path, COMM_SOCKET_PATH, <span class="built_in">sizeof</span>(server_addr.sun_path) - <span class="number">1</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">connect</span>(client_fd, (<span class="keyword">struct</span> sockaddr*)&amp;server_addr, <span class="built_in">sizeof</span>(server_addr)) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="built_in">LOGE</span>(<span class="string">&quot;Failed to connect to server: %s (path: %s)&quot;</span>, <span class="built_in">strerror</span>(errno), COMM_SOCKET_PATH);</span><br><span class="line">            <span class="built_in">close</span>(client_fd);</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="type">ssize_t</span> bytes_sent = <span class="built_in">send</span>(client_fd, message.<span class="built_in">c_str</span>(), message.<span class="built_in">length</span>(), <span class="number">0</span>);</span><br><span class="line">        <span class="built_in">close</span>(client_fd);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (bytes_sent &lt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="built_in">LOGE</span>(<span class="string">&quot;Failed to send message: %s&quot;</span>, <span class="built_in">strerror</span>(errno));</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="built_in">LOGI</span>(<span class="string">&quot;Message sent: %s&quot;</span>, message.<span class="built_in">c_str</span>());</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这样就解决权限的问题了:) 是不是就可以加载so了呢，直接dlopen(SO_PATH, FLAG)，那么<code>SO_PATH</code>从哪来？当然完善上面的跨进程通信模块，也能把path传过来，但是有点麻烦了，这里我的解决方案是在hook模块里导出一个函数用于被Injector模块远程调用，参数里传递一些必要的信息，比如<code>SO_PATH</code></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 全局变量存储目标信息</span></span><br><span class="line"><span class="type">static</span> <span class="type">char</span> g_target_process_name[<span class="number">256</span>] = &#123;<span class="number">0</span>&#125;;</span><br><span class="line"><span class="type">static</span> <span class="type">char</span> g_target_library_path[<span class="number">512</span>] = &#123;<span class="number">0</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">extern</span> <span class="string">&quot;C&quot;</span> <span class="function"><span class="type">void</span> <span class="title">setTargetInfo</span><span class="params">(<span class="type">char</span>* target_process_name, <span class="type">char</span>* target_library_path)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">strcpy</span>(g_target_process_name, target_process_name);</span><br><span class="line">    <span class="built_in">strcpy</span>(g_target_library_path, target_library_path);</span><br><span class="line">    <span class="built_in">LOGI</span>(<span class="string">&quot;Target process name: %s&quot;</span>, g_target_process_name);</span><br><span class="line">    <span class="built_in">LOGI</span>(<span class="string">&quot;Target library path: %s&quot;</span>, g_target_library_path);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>总的代码就是这样子的</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;dlfcn.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;jni.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;utils.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;../ipc/socket_comm.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LIBC <span class="string">&quot;/system/lib64/libc.so&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LIBANDROID_RUNTIME <span class="string">&quot;/system/lib64/libandroid_runtime.so&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 全局变量存储目标信息</span></span><br><span class="line"><span class="type">static</span> <span class="type">char</span> g_target_process_name[<span class="number">256</span>] = &#123;<span class="number">0</span>&#125;;</span><br><span class="line"><span class="type">static</span> <span class="type">char</span> g_target_library_path[<span class="number">512</span>] = &#123;<span class="number">0</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">pid_t</span> <span class="params">(*Fork_t)</span><span class="params">()</span></span>;</span><br><span class="line"><span class="type">static</span> Fork_t orig_fork = <span class="literal">nullptr</span>;</span><br><span class="line"><span class="type">void</span>* fork_addr = <span class="literal">nullptr</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span> <span class="params">(*SetArgV0_t)</span><span class="params">(JNIEnv*, jobject, jstring)</span></span>;</span><br><span class="line"><span class="type">static</span> SetArgV0_t orig_setArgV0 = <span class="literal">nullptr</span>;</span><br><span class="line"><span class="type">void</span>* setArgV0_addr = <span class="literal">nullptr</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="keyword">volatile</span> <span class="type">int</span>* inject_flag = <span class="literal">nullptr</span>;</span><br><span class="line"><span class="type">static</span> <span class="type">pid_t</span> g_zygote_pid = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">bool</span> g_injection_done = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">unhook</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(fork_addr) </span><br><span class="line">        <span class="built_in">DobbyDestroy</span>(fork_addr);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(setArgV0_addr) </span><br><span class="line">        <span class="built_in">DobbyDestroy</span>(setArgV0_addr);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">LOGI</span>(<span class="string">&quot;All hooks removed&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">extern</span> <span class="string">&quot;C&quot;</span> <span class="function"><span class="type">void</span> <span class="title">cleanup_hooks</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">unhook</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (inject_flag &amp;&amp; inject_flag != MAP_FAILED) &#123;</span><br><span class="line">        <span class="built_in">LOGI</span>(<span class="string">&quot;Cleaning up shared memory&quot;</span>);</span><br><span class="line">        <span class="built_in">munmap</span>((<span class="type">void</span>*)inject_flag, <span class="built_in">sizeof</span>(<span class="type">int</span>));</span><br><span class="line">        inject_flag = <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">memset</span>(g_target_process_name, <span class="number">0</span>, <span class="built_in">sizeof</span>(g_target_process_name));</span><br><span class="line">    <span class="built_in">memset</span>(g_target_library_path, <span class="number">0</span>, <span class="built_in">sizeof</span>(g_target_library_path));</span><br><span class="line">    g_injection_done = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">LOGI</span>(<span class="string">&quot;cleanup_hooks completed&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">hook_setArgV0</span><span class="params">(JNIEnv* env, jobject clazz, jstring name)</span> </span>&#123;</span><br><span class="line">    std::string process_name;</span><br><span class="line">    <span class="keyword">if</span> (name &amp;&amp; env) &#123;</span><br><span class="line">        <span class="type">const</span> <span class="type">char</span>* name_utf = env-&gt;<span class="built_in">GetStringUTFChars</span>(name, <span class="literal">nullptr</span>);</span><br><span class="line">        <span class="keyword">if</span> (name_utf) &#123;</span><br><span class="line">            process_name = name_utf;</span><br><span class="line">            env-&gt;<span class="built_in">ReleaseStringUTFChars</span>(name, name_utf);</span><br><span class="line">            <span class="built_in">LOGD</span>(<span class="string">&quot;Process name: %s&quot;</span>, process_name.<span class="built_in">c_str</span>());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!process_name.<span class="built_in">empty</span>() &amp;&amp; process_name == g_target_process_name &amp;&amp; !g_injection_done) &#123;</span><br><span class="line">        <span class="comment">// 标记已完成，避免重复注入</span></span><br><span class="line">        g_injection_done = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 在子进程中 unhook</span></span><br><span class="line">        <span class="keyword">if</span>(setArgV0_addr) &#123;</span><br><span class="line">            <span class="built_in">DobbyDestroy</span>(setArgV0_addr);</span><br><span class="line">            setArgV0_addr = <span class="literal">nullptr</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="built_in">LOGI</span>(<span class="string">&quot;Target process detected: %s, injecting library: %s&quot;</span>,</span><br><span class="line">             process_name.<span class="built_in">c_str</span>(), g_target_library_path);</span><br><span class="line"></span><br><span class="line">        <span class="type">void</span>* handle = <span class="built_in">dlopen</span>(g_target_library_path, RTLD_NOW | RTLD_NODELETE | RTLD_GLOBAL);</span><br><span class="line"></span><br><span class="line">        <span class="type">bool</span> inject_success = (handle != <span class="literal">nullptr</span>);</span><br><span class="line">        <span class="keyword">if</span> (inject_success) &#123;</span><br><span class="line">            <span class="built_in">LOGI</span>(<span class="string">&quot;Successfully loaded library: %s&quot;</span>, g_target_library_path);</span><br><span class="line">            comm::SocketClient::<span class="built_in">NotifySuccess</span>();</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="built_in">LOGE</span>(<span class="string">&quot;Failed to load library: %s, error: %s&quot;</span>,</span><br><span class="line">                 g_target_library_path, <span class="built_in">dlerror</span>());</span><br><span class="line">            comm::SocketClient::<span class="built_in">NotifyFailed</span>();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (inject_flag &amp;&amp; inject_flag != MAP_FAILED) &#123;</span><br><span class="line">            *inject_flag = <span class="number">1</span>;</span><br><span class="line">            <span class="built_in">LOGI</span>(<span class="string">&quot;Set inject_flag to 1 in shared memory&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (orig_setArgV0) &#123;</span><br><span class="line">        <span class="built_in">orig_setArgV0</span>(env, clazz, name);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">setup_setArgV0_hook</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">void</span>* handle = <span class="built_in">dlopen</span>(LIBANDROID_RUNTIME, RTLD_NOW);</span><br><span class="line">    <span class="keyword">if</span> (!handle) &#123;</span><br><span class="line">        <span class="built_in">LOGE</span>(<span class="string">&quot;Failed to open libandroid_runtime.so: %s&quot;</span>, <span class="built_in">dlerror</span>());</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">const</span> <span class="type">char</span>* symbol = <span class="string">&quot;_Z27android_os_Process_setArgV0P7_JNIEnvP8_jobjectP8_jstring&quot;</span>;</span><br><span class="line">    setArgV0_addr = <span class="built_in">dlsym</span>(handle, symbol);</span><br><span class="line">    <span class="keyword">if</span> (!setArgV0_addr) &#123;</span><br><span class="line">        <span class="built_in">LOGE</span>(<span class="string">&quot;Failed to find %s: %s&quot;</span>, symbol, <span class="built_in">dlerror</span>());</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">LOGI</span>(<span class="string">&quot;Found %s at %p&quot;</span>, symbol, setArgV0_addr);</span><br><span class="line"></span><br><span class="line">    orig_setArgV0 = (SetArgV0_t)<span class="built_in">InlineHook</span>(setArgV0_addr, (<span class="type">void</span>*)hook_setArgV0);</span><br><span class="line">    <span class="keyword">if</span> (orig_setArgV0) &#123;</span><br><span class="line">        <span class="built_in">LOGI</span>(<span class="string">&quot;Successfully hooked %s&quot;</span>, symbol);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="built_in">LOGE</span>(<span class="string">&quot;Failed to hook %s&quot;</span>, symbol);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">pid_t</span> <span class="title">hook_fork</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;enter fork func!&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="type">pid_t</span> result = <span class="built_in">orig_fork</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (result == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">LOGD</span>(<span class="string">&quot;enter child process&quot;</span>);</span><br><span class="line">        <span class="built_in">setup_setArgV0_hook</span>();</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (result &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">getpid</span>() == g_zygote_pid &amp;&amp; inject_flag &amp;&amp; inject_flag != MAP_FAILED &amp;&amp; *inject_flag == <span class="number">1</span>) &#123;</span><br><span class="line">            <span class="built_in">LOGI</span>(<span class="string">&quot;Injection completed in child process, unhooking fork in parent&quot;</span>);</span><br><span class="line">            <span class="keyword">if</span> (fork_addr) &#123;</span><br><span class="line">                <span class="built_in">DobbyDestroy</span>(fork_addr);</span><br><span class="line">                fork_addr = <span class="literal">nullptr</span>;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="built_in">munmap</span>((<span class="type">void</span>*)inject_flag, <span class="built_in">sizeof</span>(<span class="type">int</span>));</span><br><span class="line">            inject_flag = <span class="literal">nullptr</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">setup_fork_hook</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">void</span>* handle = <span class="built_in">dlopen</span>(LIBC, RTLD_NOW);</span><br><span class="line">    <span class="keyword">if</span> (!handle) &#123;</span><br><span class="line">        <span class="built_in">LOGE</span>(<span class="string">&quot;Failed to open libc.so&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">const</span> <span class="type">char</span>* fork_symbol = <span class="string">&quot;fork&quot;</span>;</span><br><span class="line">    fork_addr = <span class="built_in">dlsym</span>(handle, fork_symbol);</span><br><span class="line">    <span class="keyword">if</span> (!fork_addr) &#123;</span><br><span class="line">        <span class="built_in">LOGE</span>(<span class="string">&quot;Failed to find fork&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">LOGI</span>(<span class="string">&quot;Found fork at %p&quot;</span>, fork_addr);</span><br><span class="line"></span><br><span class="line">    orig_fork = (Fork_t)<span class="built_in">InlineHook</span>(fork_addr, (<span class="type">void</span>*)hook_fork);</span><br><span class="line">    <span class="keyword">if</span> (orig_fork) &#123;</span><br><span class="line">        <span class="built_in">LOGI</span>(<span class="string">&quot;Successfully hooked fork&quot;</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="built_in">LOGE</span>(<span class="string">&quot;Failed to hook fork&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">extern</span> <span class="string">&quot;C&quot;</span> <span class="function"><span class="type">void</span> <span class="title">setTargetInfo</span><span class="params">(<span class="type">char</span>* target_process_name, <span class="type">char</span>* target_library_path)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">strcpy</span>(g_target_process_name, target_process_name);</span><br><span class="line">    <span class="built_in">strcpy</span>(g_target_library_path, target_library_path);</span><br><span class="line">    <span class="built_in">LOGI</span>(<span class="string">&quot;Target process name: %s&quot;</span>, g_target_process_name);</span><br><span class="line">    <span class="built_in">LOGI</span>(<span class="string">&quot;Target library path: %s&quot;</span>, g_target_library_path);</span><br><span class="line"></span><br><span class="line">    g_injection_done = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (inject_flag &amp;&amp; inject_flag != MAP_FAILED) &#123;</span><br><span class="line">        *inject_flag = <span class="number">0</span>;</span><br><span class="line">        <span class="built_in">LOGI</span>(<span class="string">&quot;Reset inject_flag to 0&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (fork_addr == <span class="literal">nullptr</span> &amp;&amp; orig_fork == <span class="literal">nullptr</span>) &#123;</span><br><span class="line">        <span class="built_in">LOGI</span>(<span class="string">&quot;Re-hooking fork for new injection&quot;</span>);</span><br><span class="line">        <span class="built_in">setup_fork_hook</span>();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">__attribute__((constructor))</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">initialize_hook</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">LOGI</span>(<span class="string">&quot;Zygote hook module loaded&quot;</span>);</span><br><span class="line"></span><br><span class="line">    g_zygote_pid = <span class="built_in">getpid</span>();</span><br><span class="line"></span><br><span class="line">    inject_flag = (<span class="keyword">volatile</span> <span class="type">int</span>*)<span class="built_in">mmap</span>(<span class="literal">NULL</span>, <span class="built_in">sizeof</span>(<span class="type">int</span>),</span><br><span class="line">                                      PROT_READ | PROT_WRITE,</span><br><span class="line">                                      MAP_SHARED | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span> (inject_flag != MAP_FAILED) &#123;</span><br><span class="line">        *inject_flag = <span class="number">0</span>;</span><br><span class="line">        <span class="built_in">LOGI</span>(<span class="string">&quot;Created shared memory for inject_flag&quot;</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="built_in">LOGE</span>(<span class="string">&quot;Failed to create shared memory&quot;</span>);</span><br><span class="line">        inject_flag = <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">setup_fork_hook</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">__attribute__((destructor))</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">cleanup_hook</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;Cleaning up hooks in destructor&quot;</span>);</span><br><span class="line">    <span class="built_in">cleanup_hooks</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>自己写时记得及时unhook，不然有的软件会进不去</p>
+<h2 id="0x04-小结"><a href="#0x04-小结" class="headerlink" title="0x04 小结"></a>0x04 小结</h2><p>在学校时，用完frida之后去食堂吃饭，付钱的软件老是打不开，当时不明白为什么我明明调试的是别的app，这个app凭什么打不开，其实是用完之后zygote进程里的一些函数没有被unhook，app启动会fork zygote进程，所以就被检测到了:( </p>
+<p>再来聊聊检测和过检测吧，就说我写的这个工具吧，如果不开源，可能就是maps里有可疑路径的so，soinfo list里也会有，<code>/proc/self/fd/</code> 中的文件描述符，还有就是通信时的痕迹，别的地方感觉也没啥了(注入留下的痕迹，hook的不归我管)。前面两个，目前用户层有的解决方案就是：</p>
+<ul>
+<li>遍历 <code>/proc/&lt;pid&gt;/maps</code>，找到目标库的所有内存段</li>
+<li>对每个段，远程分配匿名内存、远程 memcpy 覆盖内容、调用 <code>mremap</code> 将匿名内存映射到原来的地址</li>
+<li>最后还原原有的内存保护权限</li>
+</ul>
+<p>但这样还是解决不了问题的，因为正常app基本没用可执行的匿名内存段，但是一些加固之后的似乎有，我之前看36O是有的</p>
+<p>solist里的痕迹就是通过找到<a target="_blank" rel="noopener" href="https://cs.android.com/android/platform/superproject/main/+/main:bionic/linker/linker_main.cpp;l=99?q=solist_remove_soinfo">solist_remove_soinfo</a>函数的地址，然后调用它，移除目标so的soinfo，当然这里还涉及获取目标so的soinfo，遍历solist等操作，不赘述了</p>
+<p>使用<a target="_blank" rel="noopener" href="https://github.com/SoyBeanMilkx/soLoader">自定义linker</a>的方案可以在so的路径上多一些选择，而且不会在solist留下痕迹，但也并非一点痕迹没有的:( 所以还是配合<a target="_blank" rel="noopener" href="https://github.com/SoyBeanMilkx/feature">内核模块</a>一起用吧</p>
+
+        
+      </div>
+
+         
+    </div>
+    
+     
+  </div>
+  
+    
+<nav id="article-nav">
+  <a class="article-nav-btn left  disabled "
+     >
+    <i class="fa-solid fa-angle-left"></i>
+    <p class="title-text">
+        
+    </p>
+  </a>
+  <a class="article-nav-btn right "
+    
+      href="/2025/07/01/InjectSo/"
+      title="Andoird平台的so注入"
+     >
+
+    <p class="title-text">
+      
+        Andoird平台的so注入
+        
+    </p>
+    <i class="fa-solid fa-angle-right"></i>
+  </a>
+</nav>
+
+
+  
+</article>
+
+
+
+
+
+    </div>
+    <div id="footer-wrapper">
+      <footer id="footer" style="text-align: center;">
+  <div id="footer-info" class="inner">
+    <p>到底了</p>
+    <p>
+      &copy; 2025 Yuuki
+    </p>
+  </div>
+</footer>
+    </div>
+    <div class="back-to-top-wrapper">
+    <button id="back-to-top-btn" class="back-to-top-btn hide" onclick="topFunction()">
+        <i class="fa-solid fa-angle-up"></i>
+    </button>
+</div>
+
+<script>
+    function topFunction() {
+        window.scroll({ top: 0, behavior: 'smooth' });
+    }
+    let btn = document.getElementById('back-to-top-btn');
+    function scrollFunction() {
+        if (document.body.scrollTop > 600 || document.documentElement.scrollTop > 600) {
+            btn.classList.remove('hide')
+        } else {
+            btn.classList.add('hide')
+        }
+    }
+    window.onscroll = function() {
+        scrollFunction();
+    }
+</script>
+
+  </div>
+  <script src="/js/light-dark-switch.js"></script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"left","width":220,"height":460,"hOffset":0,"vOffset":-100},"mobile":{"show":true},"react":{"opacity":0.85},"log":false});</script></body>
+</html>
